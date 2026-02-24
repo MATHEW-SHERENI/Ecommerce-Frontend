@@ -1,5 +1,7 @@
 import { Button, Description, Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 import { FaShoppingCart } from 'react-icons/fa';
+import { MdDone, MdClose } from 'react-icons/md';
+import Status from './Status';
 
 function ProductViewModal({open, setOpen, product, isAvailable}) {
   if (!product) return null;
@@ -39,8 +41,22 @@ function ProductViewModal({open, setOpen, product, isAvailable}) {
                   </span>
                 </div>
                 
-                <div className={`text-sm font-semibold ${isAvailable ? 'text-green-600' : 'text-red-600'}`}>
-                  {isAvailable ? `✓ In Stock (${quantity} available)` : '✗ Out of Stock'}
+                <div className="w-fit ml-auto">
+                  {isAvailable ? (
+                    <Status 
+                      text={`In Stock (${quantity} available)`}
+                      icon={MdDone} 
+                      bg="bg-green-100" 
+                      color="text-green-600"
+                    />
+                  ) : (
+                    <Status 
+                      text="Out of Stock" 
+                      icon={MdClose} 
+                      bg="bg-red-100" 
+                      color="text-red-600"
+                    />
+                  )}
                 </div>
               </div>
 
@@ -55,7 +71,7 @@ function ProductViewModal({open, setOpen, product, isAvailable}) {
                   disabled={!isAvailable}
                   className="flex-1 inline-flex items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm/6 font-semibold text-white shadow-inner shadow-white/10 focus:not-data-focus:outline-none data-focus:outline data-focus:outline-blue-400 data-hover:bg-blue-700 data-open:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
-                    <FaShoppingCart className='mr-2 mt-1'/>
+                  <FaShoppingCart className='mr-2'/>
                   {isAvailable ? 'Add to Cart' : 'Out of Stock'}
                 </Button>
               </div>
