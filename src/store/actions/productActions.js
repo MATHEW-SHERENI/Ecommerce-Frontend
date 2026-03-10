@@ -1,4 +1,5 @@
 import axios from 'axios';
+import api from '../../api/api';
 
 export const fetchProductsAction = (queryString = "") => async (dispatch) => {
     try {
@@ -50,6 +51,24 @@ export const fetchProductsAction = (queryString = "") => async (dispatch) => {
         dispatch({ type: "IS_SUCCESS" });
     } catch (error) {
         const errorMsg = error.response?.data?.message || error.message || "Failed to fetch products";
+        dispatch({
+            type: "IS_ERROR",
+            payload: errorMsg,
+        });
+    }
+};
+
+export const fetchCategories = () => async (dispatch) => {
+    try {
+        dispatch({ type: "IS_FETCHING" });
+        const { data } = await api.get(`/public/categories`);
+        dispatch({
+            type: "FETCH_CATEGORIES",
+            payload: data,
+        });
+        dispatch({ type: "IS_SUCCESS" });
+    } catch (error) {
+        const errorMsg = error?.response?.data?.message || "Failed to fetch categories";
         dispatch({
             type: "IS_ERROR",
             payload: errorMsg,

@@ -2,22 +2,22 @@ import { useEffect, useState } from "react";
 import { FiArrowUp, FiArrowDown, FiRefreshCw, FiSearch } from "react-icons/fi";
 import { FormControl, InputLabel, Select, MenuItem, Tooltip, Button } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCategories } from "../store/actions";
 
 const Filter = () => {
-    const categories = [
-        {categoryId: 1, categoryName: "Electronics"},
-        {categoryId: 2, categoryName: "Clothing"},
-        {categoryId: 3, categoryName: "Home & Kitchen"},
-        {categoryId: 4, categoryName: "Books"},
-        {categoryId: 5, categoryName: "Toys & Games"},
-        {categoryId: 6, categoryName: "Sports & Outdoors"},
-    ];
+    const dispatch = useDispatch();
+    const categories = useSelector(state => state.product.categories) || [];
 
     const [searchParams, setSearchParams] = useSearchParams();
 
     const [category, setCategory] = useState("all");
     const [sortOrder, setSortOrder] = useState("asc");
     const [searchTerm, setSearchTerm] = useState("");
+
+    useEffect(() => {
+        dispatch(fetchCategories());
+    }, [dispatch]);
 
     useEffect(() => {
         const currentCategory = searchParams.get("category") || "all";

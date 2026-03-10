@@ -26,6 +26,11 @@ export const ProductReducer = (state = initialState, action) => {
                 ...state,
                 filteredProducts: action.payload,
             };
+        case "FETCH_CATEGORIES":
+            return {
+                ...state,
+                categories: action.payload,
+            };
         default:
             return state;
     }   
