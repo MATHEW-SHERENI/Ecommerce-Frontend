@@ -4,10 +4,13 @@ import { FormControl, InputLabel, Select, MenuItem, Tooltip, Button } from "@mui
 import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../store/actions";
+import { TailSpin } from "react-loader-spinner";
+import Loader from "./Loader";
 
 const Filter = () => {
     const dispatch = useDispatch();
     const categories = Array.isArray(useSelector(state => state.product.categories)) ? useSelector(state => state.product.categories) : [];
+    const loading = useSelector(state => state.product.loading);
 
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -96,6 +99,11 @@ const Filter = () => {
                             label="Category"
                         >
                             <MenuItem value="all">All Categories</MenuItem>
+                            {loading && (
+                                <MenuItem disabled>
+                                    <Loader text="Loading categories..." height={15} width={15} />
+                                </MenuItem>
+                            )}
                             {categories.map((cat) => (
                                 <MenuItem key={cat.categoryId} value={cat.categoryName}>
                                     {cat.categoryName}

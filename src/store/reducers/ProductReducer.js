@@ -3,6 +3,8 @@ const initialState = {
     filteredProducts: null,
     categories: null,
     pagination: {},
+    loading: false,
+    error: null,
 };
 
 export const ProductReducer = (state = initialState, action) => {
@@ -30,6 +32,24 @@ export const ProductReducer = (state = initialState, action) => {
             return {
                 ...state,
                 categories: action.payload,
+            };
+        case "IS_FETCHING":
+            return {
+                ...state,
+                loading: true,
+                error: null,
+            };
+        case "IS_SUCCESS":
+            return {
+                ...state,
+                loading: false,
+                error: null,
+            };
+        case "IS_ERROR":
+            return {
+                ...state,
+                loading: false,
+                error: action.payload,
             };
         default:
             return state;
