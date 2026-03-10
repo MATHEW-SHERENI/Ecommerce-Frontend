@@ -50,7 +50,7 @@ const HeroBanner = () => {
         }}
         effect="fade"
         loop={true}
-        className="h-screen md:h-screen lg:h-screen"
+        className="h-[45vh] md:h-[55vh] lg:h-[60vh]"
       >
         {slides.map((slide) => (
           <SwiperSlide key={slide.id}>

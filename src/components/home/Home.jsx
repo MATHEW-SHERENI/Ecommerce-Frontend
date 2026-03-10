@@ -1,11 +1,56 @@
-import HeroBanner from './HeroBanner';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import HeroBanner from './HeroBanner';
+import { fetchProductsAction } from '../../store/actions';
+import ProductCard from '../shared/ProductCard';
 
 const Home = () => {
+  const dispatch = useDispatch();
+  const { products } = useSelector((state) => state.product);
+
+  useEffect(() => {
+    if (!products || products.length === 0) {
+      dispatch(fetchProductsAction('pageNumber=0&pageSize=4'));
+    }
+  }, [dispatch, products]);
+
+  const featuredProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    return products.slice(0, 4);
+  }, [products]);
+
   return (
     <div className="home-page">
       {/* Hero Banner Section */}
       <HeroBanner />
+
+      {/* Featured Products */}
+      <section className="py-12 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold">Featured Products</h2>
+            <Link
+              to="/products"
+              className="text-blue-600 font-semibold hover:text-blue-700"
+            >
+              View All Products
+            </Link>
+          </div>
+
+          {featuredProducts.length ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts.map((product, index) => (
+                <ProductCard key={product.productId ?? index} {...product} />
+              ))}
+            </div>
+          ) : (
+            <div className="py-10 text-center text-gray-600">
+              No products available yet.
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Features Section */}
       <section className="py-16 px-4 bg-gray-50">
