@@ -1,28 +1,48 @@
 import { FaExclamationTriangle } from "react-icons/fa";
 import ProductCard from "./ProductCard";
 import { useSelector } from "react-redux";
+import { useEffect, useMemo, useState } from "react";
 import useProductFilter from "./useProductFilter";
 import Filter from "./Filter";
-import Loader from "./Loader";
+import Pagination from "./Pagination";
 
 const Products = () => {
     // Use the custom hook to handle filtering
     useProductFilter();
     
     const { isLoading, errorMessage } = useSelector((state) => state.errors);
-    const { filteredProducts, products } = useSelector((state) => state.product);
+    const { filteredProducts, products, pagination } = useSelector((state) => state.product);
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Use filtered products if available, otherwise use raw products
     const displayProducts = filteredProducts || products;
+    const pageSize = pagination?.pageSize || 8;
+    const totalItems = displayProducts?.length || 0;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const safePage = Math.min(currentPage, totalPages);
+
+    const paginatedProducts = useMemo(() => {
+        if (!displayProducts?.length) return [];
+        const startIndex = (safePage - 1) * pageSize;
+        return displayProducts.slice(startIndex, startIndex + pageSize);
+    }, [displayProducts, pageSize, safePage]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [displayProducts, pageSize]);
+
+    useEffect(() => {
+        if (currentPage !== safePage) {
+            setCurrentPage(safePage);
+        }
+    }, [currentPage, safePage]);
 
     return(
         <div className="lg:px-14 sm:px-8 px-4 2xl:w-[90%] 2xl:mx-auto">
             {/* This checks if loading, else errorMessage else displays the products */}
             <Filter />
             {isLoading ? (
-                <div className="min-h-175 flex items-center justify-center">
-                    <Loader text="Loading products..." height={32} width={32} />
-                </div>
+                <div className="min-h-175" aria-busy="true" />
             ) : errorMessage ? (
                 <div className="flex justify-center items-center h-50">
                     <FaExclamationTriangle className="text-slate-800 text-3xl mr-2" />
@@ -33,9 +53,16 @@ const Products = () => {
             ) : (
                 <div className="min-h-175">
                     {displayProducts?.length ? (
-                        <div className="pb-6 pt-14 grid 2xl:grid-cols-4 lg:grid-cols-3 sm:grid-cols-2 gap-y-6 gap-x-6">
-                            {displayProducts.map((item, i) => <ProductCard key={i} {...item}/>) }
-                        </div>
+                        <>
+                            <div className="pb-6 pt-14 grid 2xl:grid-cols-4 lg:grid-cols-3 sm:grid-cols-2 gap-y-6 gap-x-6">
+                                {paginatedProducts.map((item, i) => <ProductCard key={i} {...item}/>) }
+                            </div>
+                            <Pagination
+                                currentPage={safePage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                            />
+                        </>
                     ) : (
                         <div className="py-14 text-center text-gray-600">
                             No products found.
