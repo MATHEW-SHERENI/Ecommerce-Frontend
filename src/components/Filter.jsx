@@ -4,7 +4,6 @@ import { FormControl, InputLabel, Select, MenuItem, Tooltip, Button } from "@mui
 import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../store/actions";
-import { TailSpin } from "react-loader-spinner";
 import Loader from "./Loader";
 
 const Filter = () => {

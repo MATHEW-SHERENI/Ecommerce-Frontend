@@ -3,6 +3,7 @@ import ProductCard from "./ProductCard";
 import { useSelector } from "react-redux";
 import useProductFilter from "./useProductFilter";
 import Filter from "./Filter";
+import Loader from "./Loader";
 
 const Products = () => {
     // Use the custom hook to handle filtering
@@ -19,7 +20,9 @@ const Products = () => {
             {/* This checks if loading, else errorMessage else displays the products */}
             <Filter />
             {isLoading ? (
-                <p>It is Loading...</p>
+                <div className="min-h-175 flex items-center justify-center">
+                    <Loader text="Loading products..." height={32} width={32} />
+                </div>
             ) : errorMessage ? (
                 <div className="flex justify-center items-center h-50">
                     <FaExclamationTriangle className="text-slate-800 text-3xl mr-2" />
