@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import authService from '../services/authService';
 import { AuthContext } from './AuthContextObject';
 
+export { AuthContext } from './AuthContextObject';
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
