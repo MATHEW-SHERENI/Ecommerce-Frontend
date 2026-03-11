@@ -91,7 +91,7 @@ const HeroBanner = () => {
         ))}
       </Swiper>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from {
             opacity: 0;
