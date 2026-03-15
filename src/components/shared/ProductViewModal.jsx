@@ -2,6 +2,7 @@ import { Button, Description, Dialog, DialogPanel, DialogTitle } from '@headless
 import { FaShoppingCart } from 'react-icons/fa';
 import { MdDone, MdClose } from 'react-icons/md';
 import Status from './Status';
+import { getImageUrl } from '../../utils/imageUtils';
 
 function ProductViewModal({open, setOpen, product, isAvailable}) {
   if (!product) return null;
@@ -22,8 +23,11 @@ function ProductViewModal({open, setOpen, product, isAvailable}) {
               </DialogTitle>
               
               <img 
-                src={image} 
+                src={getImageUrl(image)} 
                 alt={productName}
+                onError={(event) => {
+                  event.currentTarget.src = 'https://placehold.co/300x200?text=No+Image';
+                }}
                 className="w-full h-64 object-contain rounded-lg mt-4 mb-4 bg-gray-100"
               />
               

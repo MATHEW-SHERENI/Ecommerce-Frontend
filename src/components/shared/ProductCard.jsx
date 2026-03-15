@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FaShoppingCart } from 'react-icons/fa';
 import ProductViewModal from './ProductViewModal';
 import TextTruncate from '../../utils/TextTruncate';
+import { getImageUrl } from '../../utils/imageUtils';
 
 const ProductCard = ({
     productId,
@@ -25,8 +26,11 @@ const ProductCard = ({
         <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
             <div onClick={() => {handleProductView({id: productId, productName, image, description, quantity, price, discount, specialPrice})}} className="w-full h-48 overflow-hidden bg-white flex items-center justify-center">
                 <img 
-                src={image} 
+                src={getImageUrl(image)} 
                 alt={productName} 
+                                onError={(event) => {
+                                    event.currentTarget.src = 'https://placehold.co/300x200?text=No+Image';
+                                }}
                 className="w-full h-full object-contain cursor-pointer transition-transform duration-300 transform hover:scale-105">
                 </img>
             </div>

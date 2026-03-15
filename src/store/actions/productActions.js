@@ -1,6 +1,8 @@
 import axios from 'axios';
 import api from '../../api/api';
 
+const PUBLIC_PRODUCTS_BASE_URL = '/api/public/products';
+
 export const fetchProductsAction = (queryString = "") => async (dispatch) => {
     try {
         dispatch({ type: "IS_FETCHING" });
@@ -10,8 +12,8 @@ export const fetchProductsAction = (queryString = "") => async (dispatch) => {
         const fallbackPageSize = Number.isFinite(requestedPageSize) && requestedPageSize > 0 ? requestedPageSize : 2;
 
         const url = queryString 
-            ? `${import.meta.env.VITE_API_PUBLIC_BASE_URL}/products?${queryString}`
-            : `${import.meta.env.VITE_API_PUBLIC_BASE_URL}/products`;
+            ? `${PUBLIC_PRODUCTS_BASE_URL}?${queryString}`
+            : `${PUBLIC_PRODUCTS_BASE_URL}`;
         
         const response = await axios.get(url, {
             withCredentials: true,
