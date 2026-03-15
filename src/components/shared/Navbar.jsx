@@ -13,7 +13,7 @@ const Navbar = () => {
             <div className="lg:px-14 sm:px-8 px-4 w-full flex justify-between">
                 <Link to="/" className="flex items-center text-2xl font-bold">
                     <FaStore className="mr-2 text-3xl" />
-                    <span className="font-[Poppins]">E-Shop</span>
+                    <span className="font-[Poppins]">Smartcart</span>
                 </Link>
 
                 <ul
