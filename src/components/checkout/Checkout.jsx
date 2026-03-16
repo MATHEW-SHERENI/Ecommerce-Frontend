@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import PaymentMethod from './PaymentMethod';
 import OrderSummary from './OrderSummary';
 import { Link, useNavigate } from 'react-router-dom';
+import orderService from '../../services/orderService';
 
 const Checkout = () => {
     const [activeStep, setActiveStep] = useState(0);
@@ -60,15 +61,50 @@ const Checkout = () => {
             return;
         }
 
-        setIsPlacingOrder(true);
-        localStorage.setItem("LAST_ORDER_SUMMARY", JSON.stringify({
-            totalPrice,
+        const orderPayload = {
+            items: cart.map((item) => ({
+                productId: item.productId,
+                quantity: Number(item.quantity) || 1,
+                unitPrice: Number(item.specialPrice ?? item.price ?? 0),
+            })),
+            shippingAddress: {
+                buildingName: address.buildingName,
+                street: address.street,
+                city: address.city,
+                state: address.state,
+                pincode: address.pincode,
+                country: address.country,
+            },
             paymentMethod,
-            itemCount: cart.length,
-        }));
-        dispatch(clearCart());
-        toast.success("Order placed successfully!");
-        navigate("/order-confirm");
+            totalAmount: Number(totalPrice),
+            currency: import.meta.env.VITE_ORDER_CURRENCY || 'USD',
+        };
+
+        setIsPlacingOrder(true);
+        try {
+            const orderResponse = await orderService.createOrder(orderPayload);
+            const orderId = orderResponse?.orderId || orderResponse?.id || orderResponse?.data?.orderId || null;
+
+            localStorage.setItem("LAST_ORDER_SUMMARY", JSON.stringify({
+                orderId,
+                totalPrice,
+                paymentMethod,
+                itemCount: cart.length,
+            }));
+
+            dispatch(clearCart());
+            toast.success("Order placed successfully!");
+            navigate("/order-confirm");
+        } catch (error) {
+            const message =
+                error?.response?.data?.message ||
+                error?.response?.data?.error ||
+                error?.message ||
+                'Failed to place order. Please try again.';
+            toast.error(message);
+        } finally {
+            setIsPlacingOrder(false);
+        }
     };
 
     const onAddressChange = (event) => {

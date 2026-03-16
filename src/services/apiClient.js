@@ -1,8 +1,10 @@
 import axios from 'axios';
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+
 // Create axios instance for public endpoints
 export const publicApi = axios.create({
-    baseURL: '/api',
+    baseURL: apiBaseUrl,
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
@@ -11,7 +13,7 @@ export const publicApi = axios.create({
 
 // Create axios instance for protected endpoints
 export const protectedApi = axios.create({
-    baseURL: '/api',
+    baseURL: apiBaseUrl,
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',

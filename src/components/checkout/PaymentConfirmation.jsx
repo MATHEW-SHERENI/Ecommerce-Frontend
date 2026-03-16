@@ -20,6 +20,7 @@ const PaymentConfirmation = () => {
             </p>
             {lastOrderSummary && (
                 <div className='text-sm text-slate-700 mb-4'>
+                    {lastOrderSummary.orderId && <p><strong>Order ID:</strong> {lastOrderSummary.orderId}</p>}
                     <p><strong>Items:</strong> {lastOrderSummary.itemCount}</p>
                     <p><strong>Payment:</strong> {lastOrderSummary.paymentMethod}</p>
                     <p><strong>Total:</strong> {formatPrice(lastOrderSummary.totalPrice)}</p>
