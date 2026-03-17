@@ -1,5 +1,5 @@
 // Central export file for all Redux actions
-export { fetchProductsAction, fetchCategories } from './productActions';
+export { fetchProductsAction, fetchCategories, simulateLocalOrderStockDeduction } from './productActions';
 export { filterAndSortProducts } from './filterActions';
 export {
 	addToCart,

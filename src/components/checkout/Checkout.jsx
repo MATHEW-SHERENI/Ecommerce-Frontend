@@ -1,7 +1,7 @@
 import { Button, Step, StepLabel, Stepper } from '@mui/material';
 import React, { useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-import { clearCart } from '../../store/actions';
+import { clearCart, simulateLocalOrderStockDeduction } from '../../store/actions';
 import toast from 'react-hot-toast';
 import PaymentMethod from './PaymentMethod';
 import OrderSummary from './OrderSummary';
@@ -69,6 +69,25 @@ const Checkout = () => {
             return;
         }
 
+        const completeLocally = () => {
+            localStorage.setItem("LAST_ORDER_SUMMARY", JSON.stringify({
+                orderId: `local_${Date.now()}`,
+                totalPrice,
+                paymentMethod,
+                itemCount: cart.length,
+            }));
+
+            dispatch(simulateLocalOrderStockDeduction(cart));
+            dispatch(clearCart());
+            toast.success("Order placed successfully (test mode)!");
+            navigate("/order-confirm");
+        };
+
+        if (bypassModeActive) {
+            completeLocally();
+            return;
+        }
+
         const orderPayload = {
             items: cart.map((item) => ({
                 productId: item.productId,
@@ -109,6 +128,10 @@ const Checkout = () => {
             toast.success("Order placed successfully!");
             navigate("/order-confirm");
         } catch (error) {
+            if (error?.response?.status === 401) {
+                toast.error('Order API unauthorized. Enable test bypass mode to continue without backend auth.');
+                return;
+            }
             const message =
                 error?.response?.data?.message ||
                 error?.response?.data?.error ||

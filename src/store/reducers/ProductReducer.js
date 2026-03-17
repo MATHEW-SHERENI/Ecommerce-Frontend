@@ -14,6 +14,24 @@ const initialState = {
     error: null,
 };
 
+const applyDeductionMap = (products, deductionMap) => {
+    if (!Array.isArray(products) || products.length === 0) return products;
+
+    return products.map((product) => {
+        const key = String(product?.productId ?? '');
+        if (!key || !Object.prototype.hasOwnProperty.call(deductionMap, key)) {
+            return product;
+        }
+
+        const nextQuantity = Number(deductionMap[key]);
+        if (!Number.isFinite(nextQuantity)) return product;
+        return {
+            ...product,
+            quantity: Math.max(0, nextQuantity),
+        };
+    });
+};
+
 export const ProductReducer = (state = initialState, action) => {
     switch (action.type) {
         case "FETCH_PRODUCTS":
@@ -40,6 +58,12 @@ export const ProductReducer = (state = initialState, action) => {
             return {
                 ...state,
                 categories: action.payload,
+            };
+        case "DEDUCT_PRODUCT_STOCK":
+            return {
+                ...state,
+                products: applyDeductionMap(state.products, action.payload || {}),
+                filteredProducts: applyDeductionMap(state.filteredProducts, action.payload || {}),
             };
         case "IS_FETCHING":
             return {
