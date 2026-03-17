@@ -9,6 +9,7 @@ const Home = () => {
   const dispatch = useDispatch();
   const { products, categories } = useSelector((state) => state.product);
   const { isLoading } = useSelector((state) => state.errors);
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (!products || products.length === 0) {
@@ -167,7 +168,7 @@ const Home = () => {
                     </div>
                     <button
                       type="button"
-                      className="mt-3 w-full bg-[#ffd814] hover:bg-[#f7ca00] text-[#0f1111] text-sm font-medium py-2 rounded-full disabled:opacity-60"
+                      className="mt-3 w-full bg-[oklch(62.3%_0.214_259.815)] hover:brightness-95 text-white text-sm font-medium py-2 rounded-full disabled:opacity-60"
                       onClick={() => dispatch(addToCart(product, 1))}
                       disabled={!product?.quantity || Number(product.quantity) <= 0}
                     >
@@ -202,7 +203,7 @@ const Home = () => {
                   </Link>
                   <button
                     type="button"
-                    className="mt-3 w-full bg-[#ffd814] hover:bg-[#f7ca00] text-[#0f1111] text-sm font-medium py-2 rounded-full disabled:opacity-60"
+                    className="mt-3 w-full bg-[oklch(62.3%_0.214_259.815)] hover:brightness-95 text-white text-sm font-medium py-2 rounded-full disabled:opacity-60"
                     onClick={() => dispatch(addToCart(product, 1))}
                     disabled={!product?.quantity || Number(product.quantity) <= 0}
                   >
@@ -216,6 +217,26 @@ const Home = () => {
           )}
         </div>
       </section>
+
+      {!isAuthenticated && (
+        <section className="max-w-[1500px] mx-auto px-3 sm:px-6 lg:px-8 pb-12">
+          <div className="bg-white border border-[#ddd] p-6 text-center">
+            <p className="text-[#0f1111] text-lg font-semibold mb-4">See personalized recommendations</p>
+            <Link
+              to="/login"
+              className="inline-block bg-[oklch(62.3%_0.214_259.815)] hover:brightness-95 text-white font-medium px-8 py-2 rounded-full"
+            >
+              Sign in
+            </Link>
+            <p className="text-sm text-[#565959] mt-4">
+              New customer?{' '}
+              <Link to="/register" className="text-[#007185] hover:underline">
+                Start here
+              </Link>
+            </p>
+          </div>
+        </section>
+      )}
     </div>
   );
 };
