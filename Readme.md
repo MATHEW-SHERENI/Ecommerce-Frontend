@@ -104,6 +104,8 @@ The project uses a custom theme configuration with:
 
    Optional payment value:
    - `VITE_STRIPE_PUBLISHABLE_KEY` (only needed if Stripe components are enabled)
+   - `VITE_STRIPE_INTENT_PATH` (backend endpoint path for Stripe payment intent creation)
+   - `VITE_PAYPAL_CLIENT_ID` (required for PayPal Smart Buttons)
 
 ### Development
 

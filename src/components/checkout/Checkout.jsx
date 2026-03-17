@@ -7,10 +7,11 @@ import PaymentMethod from './PaymentMethod';
 import OrderSummary from './OrderSummary';
 import { Link, useNavigate } from 'react-router-dom';
 import orderService from '../../services/orderService';
+import StripePayment from './StripePayment';
+import PaypalPayment from './PaypalPayment';
 
 const Checkout = () => {
     const [activeStep, setActiveStep] = useState(0);
-    const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState("Stripe");
     const [address, setAddress] = useState({
         buildingName: "",
@@ -55,7 +56,7 @@ const Checkout = () => {
         setActiveStep((prevStep) => prevStep + 1);
     };
 
-    const placeOrderHandler = async () => {
+    const placeOrderHandler = async (paymentResult) => {
         if (!hasItems) {
             toast.error("Your cart is empty.");
             return;
@@ -78,9 +79,14 @@ const Checkout = () => {
             paymentMethod,
             totalAmount: Number(totalPrice),
             currency: import.meta.env.VITE_ORDER_CURRENCY || 'USD',
+            paymentResult: {
+                provider: paymentResult?.provider || paymentMethod,
+                transactionId: paymentResult?.id || null,
+                status: paymentResult?.status || 'SUCCEEDED',
+                details: paymentResult?.details || null,
+            },
         };
 
-        setIsPlacingOrder(true);
         try {
             const orderResponse = await orderService.createOrder(orderPayload);
             const orderId = orderResponse?.orderId || orderResponse?.id || orderResponse?.data?.orderId || null;
@@ -102,8 +108,6 @@ const Checkout = () => {
                 error?.message ||
                 'Failed to place order. Please try again.';
             toast.error(message);
-        } finally {
-            setIsPlacingOrder(false);
         }
     };
 
@@ -116,6 +120,7 @@ const Checkout = () => {
         "Address",
         "Payment Method",
         "Order Summary",
+        "Payment",
     ];
 
     if (!isAuthenticated) {
@@ -181,6 +186,20 @@ const Checkout = () => {
                                         cart={cart}
                                         address={address}
                                         paymentMethod={paymentMethod}/>}
+                {activeStep === 3 && (
+                    paymentMethod === 'Stripe' ? (
+                        <StripePayment
+                            totalPrice={totalPrice}
+                            address={address}
+                            onSuccess={placeOrderHandler}
+                        />
+                    ) : (
+                        <PaypalPayment
+                            totalPrice={totalPrice}
+                            onSuccess={placeOrderHandler}
+                        />
+                    )
+                )}
             </div>
         
 
@@ -214,10 +233,9 @@ const Checkout = () => {
                 </button>
             ) : (
                 <button
-                    disabled={isPlacingOrder}
-                    className='bg-custom-blue font-semibold px-6 h-10 rounded-md text-white disabled:opacity-60'
-                    onClick={placeOrderHandler}>
-                    {isPlacingOrder ? 'Placing...' : 'Place Order'}
+                    disabled
+                    className='bg-slate-400 font-semibold px-6 h-10 rounded-md text-white opacity-70 cursor-not-allowed'>
+                    Complete payment above
                 </button>
             )} 
         </div>
