@@ -79,7 +79,7 @@ const Navbar = () => {
                     ) : (
                         <li className="font-medium transition-all duration-150">
                             <Link
-                                className={`flex items-center space-x-2 px-4 py-[6px] rounded-md shadow-lg transition duration-300 ease-in-out transform bg-linear-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 ${
+                                className={`flex items-center space-x-2 px-4 py-1.5 rounded-md shadow-lg transition duration-300 ease-in-out transform bg-linear-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 ${
                                     path === '/login' ? 'text-white font-semibold' : 'text-white'
                                 }`}
                                 to="/login"

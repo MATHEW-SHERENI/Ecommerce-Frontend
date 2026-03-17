@@ -4,7 +4,7 @@ const initialState = {
     categories: null,
     pagination: {
         pageNumber: 0,
-        pageSize: 2,
+        pageSize: 50,
         totalElements: 0,
         totalPages: 1,
         lastPage: true,

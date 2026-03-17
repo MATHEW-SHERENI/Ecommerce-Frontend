@@ -3,6 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProductsAction, filterAndSortProducts } from "../store/actions";
 
+const DEFAULT_PAGE_SIZE = 50;
+
 const useProductFilter = () => {
     const [searchParams] = useSearchParams();
     const dispatch = useDispatch();
@@ -16,7 +18,7 @@ const useProductFilter = () => {
     const pageSizeParam = Number(searchParams.get("pageSize") || "");
     const pageSize = Number.isFinite(pageSizeParam) && pageSizeParam > 0
         ? pageSizeParam
-        : (pagination?.pageSize || 2);
+        : (pagination?.pageSize || DEFAULT_PAGE_SIZE);
 
     // Fetch products when filters/page change (server can paginate)
     useEffect(() => {

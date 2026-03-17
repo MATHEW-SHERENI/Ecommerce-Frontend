@@ -79,7 +79,7 @@ const ProductCard = ({
                         specialPrice,
                     }, 1))}
                     aria-label={`Add ${productName} to cart`}
-                    className={`bg-[oklch(62.3%_0.214_259.815)] ${isAvailable ? "opacity-100 hover:brightness-95" : "opacity-70"} 
+                    className={`bg-blue-500 ${isAvailable ? "opacity-100 hover:brightness-95" : "opacity-70"} 
                      text-white py-2 px-3 rounded-full mt-4 transition-colors duration-300 w-36 flex justify-center`}>
                     {isAvailable ? "Add to Cart" : "Out of Stock"}
                 </button>

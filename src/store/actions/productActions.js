@@ -2,6 +2,7 @@ import axios from 'axios';
 import api from '../../api/api';
 
 const PUBLIC_PRODUCTS_BASE_URL = '/api/public/products';
+const DEFAULT_PAGE_SIZE = 50;
 
 export const fetchProductsAction = (queryString = "") => async (dispatch) => {
     try {
@@ -9,7 +10,7 @@ export const fetchProductsAction = (queryString = "") => async (dispatch) => {
 
         const params = new URLSearchParams(queryString);
         const requestedPageSize = Number(params.get("pageSize") || "");
-        const fallbackPageSize = Number.isFinite(requestedPageSize) && requestedPageSize > 0 ? requestedPageSize : 2;
+        const fallbackPageSize = Number.isFinite(requestedPageSize) && requestedPageSize > 0 ? requestedPageSize : DEFAULT_PAGE_SIZE;
 
         const url = queryString 
             ? `${PUBLIC_PRODUCTS_BASE_URL}?${queryString}`

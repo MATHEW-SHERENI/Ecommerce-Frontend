@@ -7,6 +7,8 @@ import useProductFilter from "../../hooks/useProductFilter";
 import Filter from "./Filter";
 import Pagination from "../shared/Pagination";
 
+const DEFAULT_PAGE_SIZE = 50;
+
 const Products = () => {
     // Use the custom hook to handle filtering
     useProductFilter();
@@ -20,7 +22,7 @@ const Products = () => {
     const pageSizeParam = Number(searchParams.get("pageSize") || "");
     const pageSize = Number.isFinite(pageSizeParam) && pageSizeParam > 0
         ? pageSizeParam
-        : (pagination?.pageSize || 2);
+        : (pagination?.pageSize || DEFAULT_PAGE_SIZE);
     const totalItems = displayProducts?.length || 0;
     const totalElements = pagination?.totalElements || totalItems;
     const computedServerPages = Math.max(1, Math.ceil(totalElements / pageSize));
