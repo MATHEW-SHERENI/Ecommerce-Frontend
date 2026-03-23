@@ -1,8 +1,8 @@
 import { RotatingLines } from "react-loader-spinner";
 
-const Loader = ({ text }) => {
+const Loader = ({ text = "Please wait..." }) => {
     return (
-        <div className="flex justify-center items-center w-full h-[450px]">
+        <div className="flex justify-center items-center w-full h-112">
             <div className="flex flex-col items-center gap-1">
             <RotatingLines
                     visible={true}
@@ -16,7 +16,7 @@ const Loader = ({ text }) => {
                     wrapperClass=""
                     />
                     <p className="text-slate-800">
-                        {text ? text : "Please wait...." }
+                        {text}
                     </p>
             </div>
         </div>

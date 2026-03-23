@@ -86,7 +86,7 @@ const ImageUploadForm = ({ setOpen, product }) => {
             <Button disabled={loader}
                     onClick={() => setOpen(false)}
                     variant='outlined'
-                    className='text-white py-[10px] px-4 text-sm font-medium'>
+                    className='text-white py-2.5 px-4 text-sm font-medium'>
                 Cancel
             </Button>
 
@@ -95,7 +95,7 @@ const ImageUploadForm = ({ setOpen, product }) => {
                 type='submit'
                 variant='contained'
                 color='primary'
-                className='bg-custom-blue text-white  py-[10px] px-4 text-sm font-medium'>
+                className='bg-custom-blue text-white  py-2.5 px-4 text-sm font-medium'>
                 {loader ? (
                     <div className='flex gap-2 items-center'>
                         <Spinners /> Loading...
