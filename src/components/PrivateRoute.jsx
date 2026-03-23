@@ -12,7 +12,15 @@ const PrivateRoute = ({ publicPage = false, adminOnly = false }) => {
         return user ? <Navigate to="/" /> : <Outlet />
     }
 
+    if (!user) {
+        return <Navigate to="/login" />;
+    }
+
     if (adminOnly) {
+        if (!isAdmin && !isSeller) {
+            return <Navigate to="/" replace />;
+        }
+
         if (isSeller && !isAdmin) {
             const sellerAllowedPaths = ["/admin/orders", "/admin/products"];
             const sellerAllowed = sellerAllowedPaths.some(path => 
@@ -23,12 +31,8 @@ const PrivateRoute = ({ publicPage = false, adminOnly = false }) => {
             }
         }
     }
-
-    if (!isAdmin && !isSeller) {
-        return <Navigate to="/"/>
-    }
     
-    return user ? <Outlet /> : <Navigate to="/login" />;
+    return <Outlet />;
 }
 
 export default PrivateRoute

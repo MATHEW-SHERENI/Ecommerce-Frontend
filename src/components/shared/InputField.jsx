@@ -1,48 +1,66 @@
 const InputField = ({
     label,
     id,
-    type = "text",
-    placeholder,
-    register,
+    type,
     errors,
-    required = false,
+    register,
+    required,
     message,
+    className,
     min,
+    minMessage,
+    value,
+    placeholder,
+    trimRequired,
 }) => {
     return (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 w-full">
             <label
-                htmlFor={id}
-                className="text-sm font-semibold text-slate-700"
-            >
+                htmlFor="id"
+                className={`${
+                    className ? className : ""
+                } font-semibold text-sm text-slate-800`}>
                 {label}
-                {required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
             <input
-                id={id}
                 type={type}
+                id={id}
                 placeholder={placeholder}
-                {...register(id, {
-                    required: required ? message : false,
-                    ...(min ? { minLength: { value: min, message: `*Minimum ${min} characters required` } } : {}),
-                    ...(type === "email"
-                        ? {
-                              pattern: {
-                                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                  message: "*Enter a valid email address",
-                              },
-                          }
-                        : {}),
-                })}
-                className={`border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                    errors[id]
-                        ? "border-red-400 focus:ring-red-400"
-                        : "border-gray-300"
+                className={`${
+                    className ? className : ""
+                } px-2 py-2 border outline-hidden bg-transparent text-slate-800 rounded-md ${
+                    errors[id]?.message ? "border-red-500" : "border-slate-700" 
                 }`}
-            />
-            {errors[id] && (
-                <span className="text-xs text-red-500">{errors[id].message}</span>
-            )}
+                {...register(id, {
+                    required: {value: required, message},
+                    minLength: min
+                        ? { value: min, message: minMessage || `Minimum ${min} character is required`}
+                        : null,
+                    validate: trimRequired
+                        ? (inputValue) =>
+                            String(inputValue || "").trim().length > 0 || message
+                        : undefined,
+                    pattern:
+                        type === "email"
+                            ? {
+                                value: /^[a-zA-Z0-9]+@(?:[a-zA-Z0-9]+\.)+com+$/,
+                                message: "Invalid email"
+                            }
+                            : type === "url"
+                            ? {
+                                value: /^(https?:\/\/)?(([a-zA-Z0-9\u00a1-\uffff-]+\.)+[a-zA-Z\u00a1-\uffff]{2,})(:\d{2,5})?(\/[^\s]*)?$/,
+                                message: "Please enter a valid url"
+                            }
+                            : null,
+
+                })}
+                />
+
+                {errors[id]?.message && (
+                    <p className="text-sm font-semibold text-red-600 mt-0">
+                        {errors[id]?.message}
+                    </p>
+                )}
         </div>
     );
 };

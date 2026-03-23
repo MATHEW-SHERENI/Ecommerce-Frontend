@@ -1,29 +1,26 @@
 import { RotatingLines } from "react-loader-spinner";
 
-const Loader = ({
-    text = "Loading...",
-    height = 20,
-    width = 20,
-    color = "#00BFFF",
-    strokeWidth = 4,
-    animationDuration = 0.75,
-    ariaLabel = "loading",
-    className = "",
-}) => {
+const Loader = ({ text }) => {
     return (
-        <div className={`inline-flex items-center gap-2 ${className}`.trim()}>
+        <div className="flex justify-center items-center w-full h-[450px]">
+            <div className="flex flex-col items-center gap-1">
             <RotatingLines
-                height={height}
-                width={width}
-                color={color}
-                strokeColor={color}
-                strokeWidth={strokeWidth}
-                animationDuration={animationDuration}
-                ariaLabel={ariaLabel}
-            />
-            <span>{text}</span>
+                    visible={true}
+                    height="96"
+                    width="96"
+                    color="red"
+                    strokeWidth="5"
+                    animationDuration="0.75"
+                    ariaLabel="rotating-lines-loading"
+                    wrapperStyle={{}}
+                    wrapperClass=""
+                    />
+                    <p className="text-slate-800">
+                        {text ? text : "Please wait...." }
+                    </p>
+            </div>
         </div>
     );
-};
+}
 
 export default Loader;

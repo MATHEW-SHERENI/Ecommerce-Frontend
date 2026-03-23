@@ -1,16 +1,18 @@
 import { MdArrowBack, MdShoppingCart } from "react-icons/md";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import ItemContent from "./ItemContent";
 import CartEmpty from "./CartEmpty";
 import { formatPrice } from "../../utils/formatPrice";
 
 const Cart = () => {
+    const dispatch = useDispatch();
     const { cart } = useSelector((state) => state.carts);
-    const subtotal = cart?.reduce(
-        (acc, cur) => acc + (Number(cur?.specialPrice ?? cur?.price ?? 0) * Number(cur?.quantity ?? 0)),
-        0
-    ) ?? 0;
+    const newCart = { ...cart };
+
+    newCart.totalPrice = cart?.reduce(
+        (acc, cur) => acc + Number(cur?.specialPrice) * Number(cur?.quantity), 0
+    );
 
     if (!cart || cart.length === 0) return <CartEmpty />;
 
@@ -44,7 +46,7 @@ const Cart = () => {
 
             <div>
                 {cart && cart.length > 0 &&
-                    cart.map((item) => <ItemContent key={item.productId} {...item}/>)}
+                    cart.map((item, i) => <ItemContent key={i} {...item}/>)}
             </div>
 
             <div className="border-t-[1.5px] border-slate-200 py-4 flex sm:flex-row sm:px-0 px-2 flex-col sm:justify-between gap-4">
@@ -52,7 +54,7 @@ const Cart = () => {
                 <div className="flex text-sm gap-1 flex-col">
                     <div className="flex justify-between w-full md:text-lg text-sm font-semibold">
                         <span>Subtotal</span>
-                        <span>{formatPrice(subtotal)}</span>
+                        <span>{formatPrice(newCart?.totalPrice)}</span>
                     </div>
 
                     <p className="text-slate-500">
@@ -62,7 +64,7 @@ const Cart = () => {
                     <Link className="w-full flex justify-end" to="/checkout">
                     <button
                         onClick={() => {}}
-                        className="font-semibold w-75 py-2 px-4 rounded-xs bg-custom-blue text-white flex items-center justify-center gap-2 hover:text-gray-300 transition duration-500">
+                        className="font-semibold w-[300px] py-2 px-4 rounded-xs bg-custom-blue text-white flex items-center justify-center gap-2 hover:text-gray-300 transition duration-500">
                         <MdShoppingCart size={20} />
                         Checkout
                     </button>

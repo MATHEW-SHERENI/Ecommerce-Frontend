@@ -3,7 +3,7 @@ const btnStyles = "border-[1.2px] border-slate-800 px-3 py-1 rounded-sm";
 const SetQuantity = ({
     quantity,
     cardCounter,
-    handleQtyIncrease,
+    handeQtyIncrease,
     handleQtyDecrease,
 }) => {
    return (
@@ -13,17 +13,13 @@ const SetQuantity = ({
             <button
                 disabled={quantity<=1}
                 className={btnStyles}
-                type="button"
-                aria-label="Decrease quantity"
                 onClick={handleQtyDecrease}>
                 -
             </button>
                 <div className="text-red-500">{quantity}</div>
             <button
                 className={btnStyles}
-                type="button"
-                aria-label="Increase quantity"
-                onClick={handleQtyIncrease}>
+                onClick={handeQtyIncrease}>
                 +
             </button>
         </div>

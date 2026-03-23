@@ -2,12 +2,12 @@ import { Button, Description, Dialog, DialogPanel, DialogTitle } from '@headless
 import { FaShoppingCart } from 'react-icons/fa';
 import { MdDone, MdClose } from 'react-icons/md';
 import Status from './Status';
-import { getImageUrl } from '../../utils/imageUtils';
+import { getBackendImageUrl, handleImageLoadError } from '../../utils/env';
 
 function ProductViewModal({open, setOpen, product, isAvailable}) {
   if (!product) return null;
 
-  const{productName, image, description, price, specialPrice, quantity} = product;
+  const { productName, image, description, price, specialPrice, quantity } = product;
 
   return (
     <>
@@ -21,16 +21,16 @@ function ProductViewModal({open, setOpen, product, isAvailable}) {
               <DialogTitle as="h3" className="text-2xl font-bold text-gray-900">
                 {productName}
               </DialogTitle>
-              
-              <img 
-                src={getImageUrl(image)} 
-                alt={productName}
-                onError={(event) => {
-                  event.currentTarget.src = 'https://placehold.co/300x200?text=No+Image';
-                }}
-                className="w-full h-64 object-contain rounded-lg mt-4 mb-4 bg-gray-100"
-              />
-              
+
+              {image && (
+                <img
+                  src={getBackendImageUrl(image)}
+                  onError={handleImageLoadError}
+                  alt={productName}
+                  className="w-full h-64 object-contain rounded-lg mt-4 mb-4 bg-gray-100"
+                />
+              )}
+
               <Description className="mt-2 text-sm/6 text-gray-600">
                 {description}
               </Description>
@@ -41,23 +41,23 @@ function ProductViewModal({open, setOpen, product, isAvailable}) {
                     ${Number(price).toFixed(2)}
                   </span>
                   <span className="text-2xl font-bold text-green-600">
-                    ${Number(specialPrice).toFixed(2)}
+                    ${Number(specialPrice ?? price).toFixed(2)}
                   </span>
                 </div>
-                
+
                 <div className="w-fit ml-auto">
                   {isAvailable ? (
-                    <Status 
-                      text={`In Stock (${quantity} available)`}
-                      icon={MdDone} 
-                      bg="bg-green-100" 
+                    <Status
+                      text={`In Stock (${quantity ?? 0} available)`}
+                      icon={MdDone}
+                      bg="bg-green-100"
                       color="text-green-600"
                     />
                   ) : (
-                    <Status 
-                      text="Out of Stock" 
-                      icon={MdClose} 
-                      bg="bg-red-100" 
+                    <Status
+                      text="Out of Stock"
+                      icon={MdClose}
+                      bg="bg-red-100"
                       color="text-red-600"
                     />
                   )}
@@ -87,4 +87,4 @@ function ProductViewModal({open, setOpen, product, isAvailable}) {
   )
 }
 
-export default ProductViewModal
+export default ProductViewModal;

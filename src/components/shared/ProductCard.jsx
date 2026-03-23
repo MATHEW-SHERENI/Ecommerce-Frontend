@@ -1,91 +1,122 @@
-import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import ProductViewModal from './ProductViewModal';
-import TextTruncate from '../../utils/TextTruncate';
-import { getImageUrl } from '../../utils/imageUtils';
-import { addToCart } from '../../store/actions';
+import { useState } from "react";
+import ProductViewModal from "./ProductViewModal";
+import truncateText from "../../utils/truncateText";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../../store/actions";
+import toast from "react-hot-toast";
+import { getBackendImageUrl, handleImageLoadError } from "../../utils/env";
 
 const ProductCard = ({
-    productId,
-      productName,
-      image,
-      description,
-      quantity,
-      price,
-      discount,
-      specialPrice,
-}) =>{
+        productId,
+        productName,
+        image,
+        description,
+        quantity,
+        price,
+        discount,
+        specialPrice,
+        about = false,
+}) => {
     const [openProductViewModal, setOpenProductViewModal] = useState(false);
     const btnLoader = false;
     const [selectedViewProduct, setSelectedViewProduct] = useState("");
-    const dispatch = useDispatch();
     const isAvailable = quantity && Number(quantity) > 0;
+    const dispatch = useDispatch();
+
     const handleProductView = (product) => {
-        setSelectedViewProduct(product);
-        setOpenProductViewModal(true);
-    }
-    return(
+        if (!about) {
+            setSelectedViewProduct(product);
+            setOpenProductViewModal(true);
+        }
+    };
+
+    const addToCartHandler = (cartItems) => {
+        dispatch(addToCart(cartItems, 1, toast));
+    };
+
+    return (
         <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
-            <div onClick={() => {handleProductView({id: productId, productName, image, description, quantity, price, discount, specialPrice})}} className="w-full h-48 overflow-hidden bg-white flex items-center justify-center">
+            <div onClick={() => {
+                handleProductView({
+                    id: productId,
+                    productName,
+                    image,
+                    description,
+                    quantity,
+                    price,
+                    discount,
+                    specialPrice,
+                })
+            }} 
+                    className="w-full h-48 overflow-hidden bg-white flex items-center justify-center">
                 <img 
-                src={getImageUrl(image)} 
-                alt={productName} 
-                                onError={(event) => {
-                                    event.currentTarget.src = 'https://placehold.co/300x200?text=No+Image';
-                                }}
-                className="w-full h-full object-contain cursor-pointer transition-transform duration-300 transform hover:scale-105">
+                className="w-full h-full object-contain cursor-pointer transition-transform duration-300 transform hover:scale-105"
+                src={getBackendImageUrl(image)}
+                onError={handleImageLoadError}
+                alt={productName}>
                 </img>
             </div>
             <div className="p-4">
-                <h2 onClick={() => {handleProductView({id: productId, productName, image, description, quantity, price, discount, specialPrice})}} 
+                <h2 onClick={() => {
+                handleProductView({
+                    id: productId,
+                    productName,
+                    image,
+                    description,
+                    quantity,
+                    price,
+                    discount,
+                    specialPrice,
+                })
+            }}
                     className="text-lg font-semibold mb-2 cursor-pointer">
-                    <TextTruncate text={productName} maxLength={50} />
+                    {truncateText(productName, 50)}
                 </h2>
-
-                <div className="min-h-20 max-h-20 ">
+                
+                <div className="min-h-20 max-h-20">
                     <p className="text-gray-600 text-sm">
-                        <TextTruncate text={description} maxLength={80} />
+                        {truncateText(description, 80)}
                     </p>
                 </div>
-                
-                <div className='flex items-center justify-between mt-2'>
-                   {specialPrice ? (
+
+            { !about && (
+                <div className="flex items-center justify-between mt-2">
+                {specialPrice ? (
                     <div className="flex flex-col">
-                        <span className='text-gray-400 line-through'>
+                        <span className="text-gray-400 line-through">
                             ${Number(price).toFixed(2)}
                         </span>
-                        <span className='text-gray-800 font-bold'>
-                        ${Number(specialPrice).toFixed(2)}
-                    </span>
-                        </div>
+                        <span className="text-gray-800 font-bold">
+                            ${Number(specialPrice).toFixed(2)}
+                        </span>
+                    </div>
                 ) : (
-                    <span className='text-gray-800 font-bold'>
+                    <span className="text-gray-800 font-bold">
                         {" "}
                         ${Number(price).toFixed(2)}
                     </span>
-                )} 
+                )}
 
                 <button
                     disabled={!isAvailable || btnLoader}
                     type="button"
-                    onClick={() => dispatch(addToCart({
-                        productId,
-                        productName,
+                    onClick={() => addToCartHandler({
                         image,
+                        productName,
                         description,
-                        quantity,
-                        price,
-                        discount,
                         specialPrice,
-                    }, 1))}
+                        price,
+                        productId,
+                        quantity,
+                    })}
                     aria-label={`Add ${productName} to cart`}
                     className={`bg-blue-500 ${isAvailable ? "opacity-100 hover:brightness-95" : "opacity-70"} 
-                     text-white py-2 px-3 rounded-full mt-4 transition-colors duration-300 w-36 flex justify-center`}>
+                        text-white py-2 px-3 rounded-full mt-4 transition-colors duration-300 w-36 flex justify-center`}
+                >
                     {isAvailable ? "Add to Cart" : "Out of Stock"}
                 </button>
                 </div>
-                
-
+            )}
                 
             </div>
             <ProductViewModal 

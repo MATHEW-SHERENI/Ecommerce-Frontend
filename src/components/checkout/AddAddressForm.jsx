@@ -13,6 +13,7 @@ const AddAddressForm = ({ address, setOpenAddressModal }) => {
     const {
             register,
             handleSubmit,
+            reset,
             setValue,
             formState: {errors},
         } = useForm({
@@ -38,7 +39,7 @@ const AddAddressForm = ({ address, setOpenAddressModal }) => {
                 setValue("pincode", address?.pincode);
                 setValue("country", address?.country);
             }
-        }, [address, setValue]);
+        }, [address]);
 
   return (
     <div className="">
@@ -60,6 +61,9 @@ const AddAddressForm = ({ address, setOpenAddressModal }) => {
                     id="buildingName"
                     type="text"
                     message="*Building Name is required"
+                    min={5}
+                    minMessage="Building name must be atleast 5 characters"
+                    trimRequired
                     placeholder="Enter Building Name"
                     register={register}
                     errors={errors}
@@ -71,6 +75,9 @@ const AddAddressForm = ({ address, setOpenAddressModal }) => {
                     id="city"
                     type="text"
                     message="*City is required"
+                    min={4}
+                    minMessage="City name must be atleast 4 characters"
+                    trimRequired
                     placeholder="Enter City"
                     register={register}
                     errors={errors}
@@ -82,6 +89,9 @@ const AddAddressForm = ({ address, setOpenAddressModal }) => {
                     id="state"
                     type="text"
                     message="*State is required"
+                    min={2}
+                    minMessage="State name must be atleast 2 characters"
+                    trimRequired
                     placeholder="Enter State"
                     register={register}
                     errors={errors}
@@ -93,6 +103,9 @@ const AddAddressForm = ({ address, setOpenAddressModal }) => {
                     id="pincode"
                     type="text"
                     message="*Pincode is required"
+                    min={4}
+                    minMessage="Pincode must be at least 4 characters"
+                    trimRequired
                     placeholder="Enter Pincode"
                     register={register}
                     errors={errors}
@@ -103,6 +116,9 @@ const AddAddressForm = ({ address, setOpenAddressModal }) => {
                     id="street"
                     type="text"
                     message="*Street is required"
+                    min={5}
+                    minMessage="Street name must be atleast 5 characters"
+                    trimRequired
                     placeholder="Enter Street"
                     register={register}
                     errors={errors}
@@ -114,6 +130,9 @@ const AddAddressForm = ({ address, setOpenAddressModal }) => {
                     id="country"
                     type="text"
                     message="*Country is required"
+                    min={2}
+                    minMessage="Country name must be atleast 2 characters"
+                    trimRequired
                     placeholder="Enter Country"
                     register={register}
                     errors={errors}

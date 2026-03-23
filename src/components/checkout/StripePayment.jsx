@@ -1,68 +1,37 @@
-import { Skeleton } from '@mui/material'
+import { Alert, AlertTitle, Skeleton } from '@mui/material'
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import PaymentForm from './PaymentForm';
-import paymentService from '../../services/paymentService';
-import toast from 'react-hot-toast';
+import { createStripePaymentSecret } from '../../store/actions';
 
-const StripePayment = ({ totalPrice, address, onSuccess }) => {
-  const [clientSecret, setClientSecret] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+const stripeKey = (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "").trim();
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
-  const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-  const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+const StripePayment = () => {
+  const dispatch = useDispatch();
+  const { clientSecret } = useSelector((state) => state.auth);
+  const { totalPrice } = useSelector((state) => state.carts);
+  const { isLoading, errorMessage } = useSelector((state) => state.errors);
+  const { user, selectedUserCheckoutAddress } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    const createIntent = async () => {
-      if (!stripePublishableKey) return;
-      if (!totalPrice || Number(totalPrice) <= 0) return;
-      setIsLoading(true);
-      try {
-        const intentPayload = {
-          amount: Math.round(Number(totalPrice) * 100),
-          currency: paymentService.getCheckoutCurrency().toLowerCase(),
-          shippingAddress: address,
-          description: `SmartCart order for ${formatAddressLine(address)}`,
-        };
-        const response = await paymentService.createStripePaymentIntent(intentPayload);
-        const receivedClientSecret = response?.clientSecret || response?.data?.clientSecret;
-        if (!receivedClientSecret) {
-          throw new Error('Stripe client secret missing from payment intent response.');
-        }
-        setClientSecret(receivedClientSecret);
-      } catch (error) {
-        const message = error?.response?.data?.message || error?.message || 'Failed to initialize Stripe payment.';
-        toast.error(message);
-      } finally {
-        setIsLoading(false);
+    if (!clientSecret) {
+    const sendData = {
+      amount: Number(totalPrice) * 100,
+      currency: "usd",
+      email: user.email,
+      name: `${user.username}`,
+      address: selectedUserCheckoutAddress,
+      description: `Order for ${user.email}`,
+      metadata: {
+        test: "1"
       }
     };
-
-    createIntent();
-  }, [address, totalPrice, stripePublishableKey]);
-
-  if (!stripePublishableKey) {
-    return (
-      <div className='max-w-xl mx-auto p-6 bg-white border rounded-lg shadow-sm'>
-        <h2 className='text-xl font-semibold mb-2 text-slate-900'>Test Checkout Mode</h2>
-        <p className='text-slate-600 mb-4'>
-          Stripe is not configured in this environment. You can still continue checkout for testing.
-        </p>
-        <button
-          type='button'
-          onClick={() => onSuccess({
-            provider: 'BYPASS',
-            id: `bypass_${Date.now()}`,
-            status: 'SUCCEEDED',
-            details: { message: 'Stripe key missing, test checkout used.' },
-          })}
-          className='bg-custom-blue text-white font-semibold px-6 py-2.5 rounded-md hover:opacity-90 transition-opacity'>
-          Complete Test Checkout
-        </button>
-      </div>
-    )
-  }
+      dispatch(createStripePaymentSecret(sendData));
+    }
+  }, [clientSecret]);
 
   if (isLoading) {
     return (
@@ -72,21 +41,25 @@ const StripePayment = ({ totalPrice, address, onSuccess }) => {
     )
   }
 
+  if (!stripePromise) {
+    return (
+      <Alert severity="warning">
+        <AlertTitle>Stripe key missing</AlertTitle>
+        Set <strong>VITE_STRIPE_PUBLISHABLE_KEY</strong> in your .env file to enable card payments.
+      </Alert>
+    );
+  }
+
 
   return (
     <>
       {clientSecret && (
         <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <PaymentForm clientSecret={clientSecret} totalPrice={totalPrice} onSuccess={onSuccess} />
+          <PaymentForm clientSecret={clientSecret} totalPrice={totalPrice} />
         </Elements>
       )}
     </>
   )
 }
-
-const formatAddressLine = (address) => {
-  if (!address) return 'customer';
-  return [address?.buildingName, address?.city, address?.country].filter(Boolean).join(', ') || 'customer';
-};
 
 export default StripePayment

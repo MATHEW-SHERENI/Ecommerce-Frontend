@@ -1,138 +1,126 @@
-import { useEffect, useRef, useState } from "react";
-import { FiArrowUp, FiArrowDown, FiRefreshCw, FiSearch } from "react-icons/fi";
-import { FormControl, InputLabel, Select, MenuItem, Tooltip, Button } from "@mui/material";
-import { useSearchParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchCategories } from "../../store/actions";
-import Loader from "../shared/Loader";
+import { Button, FormControl, InputLabel, MenuItem, Select, Tooltip } from "@mui/material";
+import { useEffect, useState } from "react";
+import { FiArrowDown, FiArrowUp, FiRefreshCw, FiSearch } from "react-icons/fi";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-const Filter = () => {
-    const dispatch = useDispatch();
-    const { categories: productCategories, loading, error } = useSelector((state) => state.product);
-    const categories = Array.isArray(productCategories) ? productCategories : [];
-
-    const [searchParams, setSearchParams] = useSearchParams();
-
-    const [searchTerm, setSearchTerm] = useState(searchParams.get("searchTerm") || "");
-    const lastSearchTermRef = useRef("");
-    const category = searchParams.get("category") || "all";
-    const sortOrder = searchParams.get("sortOrder") || "asc";
+const Filter = ({ categories }) => {
+    const [searchParams] = useSearchParams();
+    const params = new URLSearchParams(searchParams);
+    const pathname = useLocation().pathname;
+    const navigate = useNavigate();
+    
+    const [category, setCategory] = useState("all");
+    const [sortOrder, setSortOrder] = useState("asc");
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
-        dispatch(fetchCategories());
-    }, [dispatch]);
+        const currentCategory = searchParams.get("category") || "all";
+        const currentSortOrder = searchParams.get("sortby") || "asc";
+        const currentSearchTerm = searchParams.get("keyword") || "";
 
-    // Debounce search term to update URL with delay
-    useEffect(() => {
-        if (lastSearchTermRef.current === searchTerm) return;
-        const delayTimer = setTimeout(() => {
-            const newParams = new URLSearchParams(searchParams);
-            if (searchTerm.trim() === "") {
-                newParams.delete("searchTerm");
+        setCategory(currentCategory);
+        setSortOrder(currentSortOrder);
+        setSearchTerm(currentSearchTerm);
+    }, [searchParams]);
+
+    useEffect(() => { 
+        const handler = setTimeout(() => {
+            if (searchTerm) {
+                searchParams.set("keyword", searchTerm);
             } else {
-                newParams.set("searchTerm", searchTerm);
+                searchParams.delete("keyword");
             }
-            newParams.set("page", "1");
-            setSearchParams(newParams);
-            lastSearchTermRef.current = searchTerm;
-        }, 500); // 500ms delay
+            navigate(`${pathname}?${searchParams.toString()}`);
+        }, 700);
 
-        return () => clearTimeout(delayTimer);
-    }, [searchTerm, searchParams, setSearchParams]);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [searchParams, searchTerm, navigate, pathname]);
 
-    const handleCategoryChange = (e) => {
-        const selectedCategory = e.target.value;
-        const newParams = new URLSearchParams(searchParams);
+    const handleCategoryChange = (event) => {
+        const selectedCategory = event.target.value;
+
         if (selectedCategory === "all") {
-            newParams.delete("category");
+            params.delete("category");
         } else {
-            newParams.set("category", selectedCategory);
+            params.set("category", selectedCategory);
         }
-        newParams.set("page", "1");
-        setSearchParams(newParams);
-    };
-
-    const handleClearFilters = () => {
-        const newParams = new URLSearchParams();
-        const pageSize = searchParams.get("pageSize");
-        if (pageSize) {
-            newParams.set("pageSize", pageSize);
-        }
-        newParams.set("page", "1");
-        setSearchParams(newParams);
-        setSearchTerm("");
+        navigate(`${pathname}?${params}`);
+        setCategory(event.target.value);
     };
 
     const toggleSortOrder = () => {
-        const newOrder = (sortOrder === "asc" ? "desc" : "asc");
-        const newParams = new URLSearchParams(searchParams);
-        newParams.set("sortOrder", newOrder);
-        newParams.set("page", "1");
-        setSearchParams(newParams);
+        setSortOrder((prevOrder) => {
+            const newOrder = (prevOrder === "asc") ?  "desc" : "asc";
+            params.set("sortby", newOrder);
+            navigate(`${pathname}?${params}`);
+            return newOrder;
+        })
     };
 
-    return(
-        <div className="py-4 lg:py-6">
-            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center sm:justify-between w-full">
-                {/* SEARCH BAR */}
-                <div className="relative flex items-center w-full sm:w-80 md:w-96">
-                    <FiSearch className="absolute left-4 text-slate-600 text-lg pointer-events-none" />
-                    <input
-                        type="text"
-                        placeholder="Search products..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500"
-                    />
-                </div>
+    const handleClearFilters = () => {
+        navigate({ pathname : window.location.pathname });
+    };
 
-                {/* CATEGORY FILTER & SORT BUTTON - Right Side */}
-                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center shrink-0">
-                    <FormControl variant="outlined" size="small" className="w-full sm:w-40">
-                        <InputLabel>Category</InputLabel>
-                        <Select 
-                            labelId="category-select-label" 
-                            value={category} 
+    return (
+        <div className="flex lg:flex-row flex-col-reverse lg:justify-between justify-center items-center gap-4">
+            {/* SEARCH BAR */}
+            <div className="relative flex items-center 2xl:w-[450px] sm:w-[420px] w-full">
+                <input 
+                    type="text"
+                    placeholder="Search Products"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="border border-gray-400 text-slate-800 rounded-md py-2 pl-10 pr-4 w-full focus:outline-hidden focus:ring-2 focus:ring-[#1976d2]"/>
+                <FiSearch className="absolute left-3 text-slate-800 size={20}"/>
+            </div>
+
+            {/* CATEGORY SELECTION */}
+            <div className="flex sm:flex-row flex-col gap-4 items-center">
+                <FormControl
+                    className="text-slate-800 border-slate-700"
+                    variant="outlined"
+                    size="small">
+                        <InputLabel id="category-select-label">Category</InputLabel>
+                        <Select
+                            labelId="category-select-label"
+                            value={category}
                             onChange={handleCategoryChange}
                             label="Category"
-                        >
-                            <MenuItem value="all">All Categories</MenuItem>
-                            {loading && (
-                                <MenuItem disabled>
-                                    <Loader text="Loading categories..." height={15} width={15} />
-                                </MenuItem>
-                            )}
-                            {error && (
-                                <MenuItem disabled>
-                                    <span style={{ color: 'red' }}>Failed to load categories</span>
-                                </MenuItem>
-                            )}
-                            {categories.map((cat) => (
-                                <MenuItem key={cat.categoryId} value={cat.categoryName}>
-                                    {cat.categoryName}
+                            className="min-w-[120px] text-slate-800 border-slate-700"
+                         >
+                            <MenuItem value="all">All</MenuItem>
+                            {categories.map((item) => (
+                                <MenuItem key={item.categoryId} value={item.categoryName}>
+                                    {item.categoryName}
                                 </MenuItem>
                             ))}
-                        </Select>
-                    </FormControl>
+                         </Select>
+                </FormControl>
 
-                    {/* SORT BUTTON */}
-                    <Tooltip title={`Sort by price: ${sortOrder === "asc" ? "ascending" : "descending"}`}>
-                        <Button variant="contained" 
-                            onClick={toggleSortOrder}  
-                            color="primary"
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg transition-colors duration-300 ease-in shadow-md focus:outline-none">
-                            Sort By
-                            {sortOrder === "asc" ? (<FiArrowUp size={20}/>) : (<FiArrowDown size={20}/>)} 
-                        </Button>
-                    </Tooltip>
-                    <button 
-                        onClick={handleClearFilters}
-                        className="flex items-center gap-2 px-4 py-2 bg-rose-900 text-white rounded-lg transition-colors duration-300 ease-in shadow-md focus:outline-none hover:bg-rose-800">
-                        <FiRefreshCw className="font-semibold" size={16} />
-                        <span className="font-semibold">Clear Filters</span>
-                    </button>
-                    
-                </div>
+                {/* SORT BUTTON & CLEAR FILTER */}
+                <Tooltip title="Sorted by price: asc">
+                    <Button variant="contained" 
+                        onClick={toggleSortOrder}
+                        color="primary" 
+                        className="flex items-center gap-2 h-10">
+                        Sort By
+                        {sortOrder === "asc" ? (
+                            <FiArrowUp size={20} />
+                        ) : (
+                            <FiArrowDown size={20} />
+                        )}
+                        
+                    </Button>
+                </Tooltip>
+                <button 
+                className="flex items-center gap-2 bg-rose-900 text-white px-3 py-2 rounded-md transition duration-300 ease-in shadow-md focus:outline-hidden"
+                onClick={handleClearFilters}
+                >
+                    <FiRefreshCw className="font-semibold" size={16}/>
+                    <span className="font-semibold">Clear Filter</span>
+                </button>
             </div>
         </div>
     );

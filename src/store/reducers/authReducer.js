@@ -1,34 +1,30 @@
-const storedUser = (() => {
-    try {
-        const raw = localStorage.getItem("user");
-        return raw ? JSON.parse(raw) : null;
-    } catch {
-        return null;
-    }
-})();
-
 const initialState = {
-    user: storedUser,
-    isAuthenticated: !!storedUser,
-    roles: storedUser?.roles ?? [],
-};
+    user: null,
+    address: [],
+    clientSecret: null,
+    selectedUserCheckoutAddress: null,
+}
 
-export const AuthReducer = (state = initialState, action) => {
+export const authReducer = (state = initialState, action) => {
     switch (action.type) {
-        case "AUTH_LOGIN_SUCCESS":
-            return {
-                ...state,
-                user: action.payload,
-                isAuthenticated: true,
-                roles: action.payload?.roles ?? [],
-            };
-        case "AUTH_LOGOUT":
-            return {
-                ...state,
+        case "LOGIN_USER":
+            return { ...state, user: action.payload };
+        case "USER_ADDRESS":
+            return { ...state, address: action.payload };
+        case "SELECT_CHECKOUT_ADDRESS":
+            return { ...state, selectedUserCheckoutAddress: action.payload };
+        case "REMOVE_CHECKOUT_ADDRESS":
+            return { ...state, selectedUserCheckoutAddress: null };
+        case "CLIENT_SECRET":
+            return { ...state, clientSecret: action.payload };
+        case "REMOVE_CLIENT_SECRET_ADDRESS":
+            return { ...state, clientSecret: null, selectedUserCheckoutAddress: null };
+        case "LOG_OUT":
+            return { 
                 user: null,
-                isAuthenticated: false,
-                roles: [],
-            };
+                address: null,
+             };
+             
         default:
             return state;
     }
