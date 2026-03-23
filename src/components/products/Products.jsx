@@ -1,100 +1,51 @@
 import { FaExclamationTriangle } from "react-icons/fa";
 import ProductCard from "../shared/ProductCard";
-import { useSelector } from "react-redux";
-import { useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import useProductFilter from "../../hooks/useProductFilter";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { fetchCategories } from "../../store/actions";
 import Filter from "./Filter";
-import Pagination from "../shared/Pagination";
-
-const DEFAULT_PAGE_SIZE = 50;
+import useProductFilter from "../../hooks/useProductFilter";
+import Loader from "../shared/Loader";
+import Paginations from "../shared/Paginations";
 
 const Products = () => {
-    // Use the custom hook to handle filtering
+    const { isLoading, errorMessage } = useSelector(
+        (state) => state.errors
+    );
+    const {products, categories, pagination} = useSelector(
+        (state) => state.products
+    )
+    const dispatch = useDispatch();
     useProductFilter();
-    
-    const { isLoading, errorMessage } = useSelector((state) => state.errors);
-    const { filteredProducts, products, pagination, isServerPaginated } = useSelector((state) => state.product);
-    const [searchParams, setSearchParams] = useSearchParams();
-
-    // Use filtered products if available, otherwise use raw products
-    const displayProducts = isServerPaginated ? products : (filteredProducts || products);
-    const pageSizeParam = Number(searchParams.get("pageSize") || "");
-    const pageSize = Number.isFinite(pageSizeParam) && pageSizeParam > 0
-        ? pageSizeParam
-        : (pagination?.pageSize || DEFAULT_PAGE_SIZE);
-    const totalItems = displayProducts?.length || 0;
-    const totalElements = pagination?.totalElements || totalItems;
-    const computedServerPages = Math.max(1, Math.ceil(totalElements / pageSize));
-    const totalPages = isServerPaginated
-        ? (pagination?.totalPages || computedServerPages)
-        : Math.max(1, Math.ceil(totalItems / pageSize));
-    const pageParam = Number(searchParams.get("page") || "1");
-    const currentPage = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
-    const safePage = Math.min(currentPage, totalPages);
-
-    const paginatedProducts = useMemo(() => {
-        if (!displayProducts?.length) return [];
-        if (isServerPaginated) return displayProducts;
-        const startIndex = (safePage - 1) * pageSize;
-        return displayProducts.slice(startIndex, startIndex + pageSize);
-    }, [displayProducts, pageSize, safePage, isServerPaginated]);
 
     useEffect(() => {
-        if (currentPage !== safePage) {
-            const nextParams = new URLSearchParams(searchParams);
-            nextParams.set("page", String(safePage));
-            setSearchParams(nextParams);
-        }
-    }, [currentPage, safePage, searchParams, setSearchParams]);
+        dispatch(fetchCategories());
+    }, [dispatch]);
 
-    const handlePageChange = (page) => {
-        const nextPage = Math.min(Math.max(1, page), totalPages);
-        const nextParams = new URLSearchParams(searchParams);
-        nextParams.set("page", String(nextPage));
-        setSearchParams(nextParams);
-    };
-
-    const handlePageSizeChange = (size) => {
-        const nextParams = new URLSearchParams(searchParams);
-        nextParams.set("pageSize", String(size));
-        nextParams.set("page", "1");
-        setSearchParams(nextParams);
-    };
-
-    return(
-        <div className="lg:px-14 sm:px-8 px-4 2xl:w-[90%] 2xl:mx-auto">
-            {/* This checks if loading, else errorMessage else displays the products */}
-            <Filter />
+    return (
+        <div className="lg:px-14 sm:px-8 px-4 py-14 2xl:w-[90%] 2xl:mx-auto">
+            <Filter categories={categories ? categories : []}/>
             {isLoading ? (
-                <div className="min-h-175" aria-busy="true" />
+                <Loader />
             ) : errorMessage ? (
-                <div className="flex justify-center items-center h-50">
-                    <FaExclamationTriangle className="text-slate-800 text-3xl mr-2" />
+                <div className="flex justify-center items-center h-[200px]">
+                    <FaExclamationTriangle className="text-slate-800 text-3xl mr-2"/>
                     <span className="text-slate-800 text-lg font-medium">
                         {errorMessage}
                     </span>
                 </div>
             ) : (
-                <div className="min-h-175">
-                    {displayProducts?.length ? (
-                        <>
-                            <div className="pb-6 pt-14 grid 2xl:grid-cols-4 lg:grid-cols-3 sm:grid-cols-2 gap-y-6 gap-x-6">
-                                {paginatedProducts.map((item, i) => <ProductCard key={i} {...item}/>) }
-                            </div>
-                            <Pagination
-                                currentPage={safePage}
-                                totalPages={totalPages}
-                                onPageChange={handlePageChange}
-                                pageSize={pageSize}
-                                onPageSizeChange={handlePageSizeChange}
-                            />
-                        </>
-                    ) : (
-                        <div className="py-14 text-center text-gray-600">
-                            No products found.
-                        </div>
-                    )}
+                <div className="min-h-[700px]">
+                    <div className="pb-6 pt-14 grid 2xl:grid-cols-4 lg:grid-cols-3 sm:grid-cols-2 gap-y-6 gap-x-6">
+                       {products && 
+                        products.map((item, i) => <ProductCard key={i} {...item} />
+                        )}
+                    </div>
+                    <div className="flex justify-center pt-10">
+                        <Paginations 
+                            numberOfPage = {pagination?.totalPages}
+                            totalProducts = {pagination?.totalElements}/>
+                    </div>
                 </div>
             )}
         </div>

@@ -1,11 +1,8 @@
-const truncateText = (text = '', maxLength = 50) => {
-    const normalized = typeof text === 'string' ? text : String(text ?? '');
-
-    if (normalized.length <= maxLength) {
-        return normalized;
+const truncateText = (text, charLimit = 90) => {
+    if (text?.length > charLimit) {
+        return text.slice(0, charLimit) + "...";
     }
-
-    return `${normalized.slice(0, Math.max(maxLength - 3, 0)).trimEnd()}...`;
+    return text;
 };
 
 export default truncateText;
