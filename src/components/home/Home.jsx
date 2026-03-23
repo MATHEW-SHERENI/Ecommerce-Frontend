@@ -14,13 +14,10 @@ const Home = () => {
     const isAuthenticated = Boolean(user && (user?.id || user?.username || user?.email));
 
     useEffect(() => {
-        if (!products || products.length === 0) {
-            dispatch(fetchProducts("pageNumber=0&pageSize=24"));
-        }
-        if (!categories || categories.length === 0) {
-            dispatch(fetchCategories());
-        }
-    }, [dispatch, products, categories]);
+        // Fetch once on page load to avoid loops when API returns empty arrays.
+        dispatch(fetchProducts("pageNumber=0&pageSize=24"));
+        dispatch(fetchCategories());
+    }, [dispatch]);
 
     const featuredProducts = useMemo(() => {
         if (!products || products.length === 0) return [];
@@ -68,13 +65,13 @@ const Home = () => {
     return (
         <div className="bg-[#e3e6e6] min-h-screen">
             <section className="w-full bg-[#131921] text-white text-sm px-4 sm:px-8 lg:px-14 py-2">
-                <div className="max-w-[1500px] mx-auto flex items-center justify-between gap-2">
+                <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
                     <p className="truncate">Free delivery on orders above $50 | Daily deals live now</p>
                     <Link to="/products" className="whitespace-nowrap underline">Shop deals</Link>
                 </div>
             </section>
 
-            <section className="relative w-full h-[320px] sm:h-[380px] lg:h-[440px] overflow-hidden">
+            <section className="relative w-full h-80 sm:h-96 lg:h-110 overflow-hidden">
                 <img
                     src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1600&h=700&fit=crop"
                     alt="shopping banner"
@@ -83,20 +80,20 @@ const Home = () => {
                 <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-[#e3e6e6]" />
             </section>
 
-            <section className="max-w-[1500px] mx-auto px-3 sm:px-6 lg:px-8 -mt-56 sm:-mt-48 relative z-10 pb-4">
+            <section className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 -mt-56 sm:-mt-48 relative z-10 pb-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {quickPanels.map((panel, panelIndex) => (
-                        <div key={panelIndex} className="bg-white p-4 border border-[#ddd] min-h-[360px]">
+                        <div key={panelIndex} className="bg-white p-4 border border-[#ddd] min-h-90">
                             <h2 className="text-xl font-bold text-[#0f1111] mb-3">{panel.title}</h2>
                             <div className="grid grid-cols-2 gap-2">
                                 {panel.products.slice(0, 4).map((product, index) => (
                                     <Link key={product?.productId ?? `${panelIndex}-${index}`} to="/products" className="block">
-                                        <div className="bg-[#f7f7f7] border border-[#efefef] p-2 h-[120px] flex items-center justify-center">
+                                        <div className="bg-[#f7f7f7] border border-[#efefef] p-2 h-30 flex items-center justify-center">
                                             <img
                                                 src={getBackendImageUrl(product?.image)}
                                                 alt={product?.productName || "product"}
                                                 onError={handleImageLoadError}
-                                                className="max-h-[100px] object-contain"
+                                                className="max-h-25 object-contain"
                                             />
                                         </div>
                                         <p className="text-xs text-[#0f1111] mt-1 leading-snug">
@@ -113,7 +110,7 @@ const Home = () => {
                 </div>
             </section>
 
-            <section className="max-w-[1500px] mx-auto px-3 sm:px-6 lg:px-8 pb-4">
+            <section className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 pb-4">
                 <div className="bg-white border border-[#ddd] p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                         <h2 className="text-2xl font-bold text-[#0f1111]">Shop by category</h2>
@@ -144,7 +141,7 @@ const Home = () => {
                 </div>
             </section>
 
-            <section className="max-w-[1500px] mx-auto px-3 sm:px-6 lg:px-8 pb-4">
+            <section className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 pb-4">
                 <div className="bg-white border border-[#ddd] p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                         <h2 className="text-2xl font-bold text-[#0f1111]">Deals inspired by your browsing history</h2>
@@ -160,12 +157,12 @@ const Home = () => {
                                 return (
                                     <div key={product?.productId ?? `deal-${index}`} className="border border-[#efefef] p-3 bg-white">
                                         <Link to="/products" className="block">
-                                            <div className="h-[140px] bg-[#f7f7f7] flex items-center justify-center">
+                                            <div className="h-35 bg-[#f7f7f7] flex items-center justify-center">
                                                 <img
                                                     src={getBackendImageUrl(product?.image)}
                                                     alt={product?.productName || "product"}
                                                     onError={handleImageLoadError}
-                                                    className="max-h-[120px] object-contain"
+                                                    className="max-h-30 object-contain"
                                                 />
                                             </div>
                                             <p className="text-sm text-[#0f1111] mt-2 line-clamp-2 min-h-10">{product?.productName}</p>
@@ -177,7 +174,7 @@ const Home = () => {
                                         </div>
                                         <button
                                             type="button"
-                                            className="mt-3 w-full bg-[oklch(62.3%_0.214_259.815)] hover:brightness-95 text-white text-sm font-medium py-2 rounded-full disabled:opacity-60"
+                                            className="mt-3 w-full bg-blue-500 hover:brightness-95 text-white text-sm font-medium py-2 rounded-full disabled:opacity-60"
                                             onClick={() => addToCartHandler(product)}
                                             disabled={!product?.quantity || Number(product.quantity) <= 0}
                                         >
@@ -193,7 +190,7 @@ const Home = () => {
                 </div>
             </section>
 
-            <section className="max-w-[1500px] mx-auto px-3 sm:px-6 lg:px-8 pb-10">
+            <section className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 pb-10">
                 <div className="bg-white border border-[#ddd] p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                         <h2 className="text-2xl font-bold text-[#0f1111]">Top picks for you</h2>
@@ -204,12 +201,12 @@ const Home = () => {
                             {featuredProducts.map((product, index) => (
                                 <div key={product?.productId ?? `featured-${index}`} className="border border-[#efefef] p-3">
                                     <Link to="/products" className="block">
-                                        <div className="h-[180px] bg-[#f7f7f7] flex items-center justify-center">
+                                        <div className="h-45 bg-[#f7f7f7] flex items-center justify-center">
                                             <img
                                                 src={getBackendImageUrl(product?.image)}
                                                 alt={product?.productName || "product"}
                                                 onError={handleImageLoadError}
-                                                className="max-h-[150px] object-contain"
+                                                className="max-h-36 object-contain"
                                             />
                                         </div>
                                         <p className="mt-3 text-sm text-[#0f1111] line-clamp-2 min-h-10">{product?.productName}</p>
@@ -217,7 +214,7 @@ const Home = () => {
                                     </Link>
                                     <button
                                         type="button"
-                                        className="mt-3 w-full bg-[oklch(62.3%_0.214_259.815)] hover:brightness-95 text-white text-sm font-medium py-2 rounded-full disabled:opacity-60"
+                                        className="mt-3 w-full bg-blue-500 hover:brightness-95 text-white text-sm font-medium py-2 rounded-full disabled:opacity-60"
                                         onClick={() => addToCartHandler(product)}
                                         disabled={!product?.quantity || Number(product.quantity) <= 0}
                                     >
@@ -233,12 +230,12 @@ const Home = () => {
             </section>
 
             {!isAuthenticated && (
-                <section className="max-w-[1500px] mx-auto px-3 sm:px-6 lg:px-8 pb-12">
+                <section className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 pb-12">
                     <div className="bg-white border border-[#ddd] p-6 text-center">
                         <p className="text-[#0f1111] text-lg font-semibold mb-4">See personalized recommendations</p>
                         <Link
                             to="/login"
-                            className="inline-block bg-[oklch(62.3%_0.214_259.815)] hover:brightness-95 text-white font-medium px-8 py-2 rounded-full"
+                            className="inline-block bg-blue-500 hover:brightness-95 text-white font-medium px-8 py-2 rounded-full"
                         >
                             Sign in
                         </Link>

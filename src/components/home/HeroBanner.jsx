@@ -32,7 +32,7 @@ const HeroBanner = () => {
 
                     {bannerLists.map((item, i) => (
                         <SwiperSlide key={item.id}>
-                            <div className={`carousel-item rounded-md sm:h-[500px] h-96 ${colors[i]}`}>
+                            <div className={`carousel-item rounded-md sm:h-125 h-96 ${colors[i]}`}>
                                 <div className='flex items-center justify-center'>
                                     <div className='hidden lg:flex justify-center w-1/2 p-8'>
                                     <div className='text-center'>

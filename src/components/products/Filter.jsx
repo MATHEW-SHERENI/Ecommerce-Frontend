@@ -5,7 +5,6 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 const Filter = ({ categories }) => {
     const [searchParams] = useSearchParams();
-    const params = new URLSearchParams(searchParams);
     const pathname = useLocation().pathname;
     const navigate = useNavigate();
     
@@ -25,12 +24,13 @@ const Filter = ({ categories }) => {
 
     useEffect(() => { 
         const handler = setTimeout(() => {
+            const params = new URLSearchParams(searchParams);
             if (searchTerm) {
-                searchParams.set("keyword", searchTerm);
+                params.set("keyword", searchTerm);
             } else {
-                searchParams.delete("keyword");
+                params.delete("keyword");
             }
-            navigate(`${pathname}?${searchParams.toString()}`);
+            navigate(`${pathname}?${params.toString()}`);
         }, 700);
 
         return () => {
@@ -40,6 +40,7 @@ const Filter = ({ categories }) => {
 
     const handleCategoryChange = (event) => {
         const selectedCategory = event.target.value;
+        const params = new URLSearchParams(searchParams);
 
         if (selectedCategory === "all") {
             params.delete("category");
@@ -53,6 +54,7 @@ const Filter = ({ categories }) => {
     const toggleSortOrder = () => {
         setSortOrder((prevOrder) => {
             const newOrder = (prevOrder === "asc") ?  "desc" : "asc";
+            const params = new URLSearchParams(searchParams);
             params.set("sortby", newOrder);
             navigate(`${pathname}?${params}`);
             return newOrder;
@@ -60,13 +62,16 @@ const Filter = ({ categories }) => {
     };
 
     const handleClearFilters = () => {
-        navigate({ pathname : window.location.pathname });
+        setSearchTerm("");
+        setCategory("all");
+        setSortOrder("asc");
+        navigate(pathname);
     };
 
     return (
         <div className="flex lg:flex-row flex-col-reverse lg:justify-between justify-center items-center gap-4">
             {/* SEARCH BAR */}
-            <div className="relative flex items-center 2xl:w-[450px] sm:w-[420px] w-full">
+            <div className="relative flex items-center 2xl:w-md sm:w-105 w-full">
                 <input 
                     type="text"
                     placeholder="Search Products"
@@ -88,7 +93,7 @@ const Filter = ({ categories }) => {
                             value={category}
                             onChange={handleCategoryChange}
                             label="Category"
-                            className="min-w-[120px] text-slate-800 border-slate-700"
+                                     className="min-w-30 text-slate-800 border-slate-700"
                          >
                             <MenuItem value="all">All</MenuItem>
                             {categories.map((item) => (

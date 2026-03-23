@@ -63,14 +63,14 @@ const AddCategoryForm = ({ setOpen, open, category, update = false }) => {
             disabled={open}
             onClick={() => setOpen(false)}
             type="button"
-            className={`border border-borderColor rounded-[5px] font-metropolis  text-textColor py-[10px] px-4 text-sm font-medium`}
+            className={`border border-borderColor rounded-[5px] font-metropolis  text-textColor py-2.5 px-4 text-sm font-medium`}
           >
             Cancel
           </button>
           <button
             disabled={open}
             type="submit"
-            className={`font-metropolis rounded-[5px]  bg-custom-blue hover:bg-blue-800 text-white  py-[10px] px-4 text-sm font-medium`}
+            className={`font-metropolis rounded-[5px]  bg-custom-blue hover:bg-blue-800 text-white  py-2.5 px-4 text-sm font-medium`}
           >
             {open ? "Loading.." : update ? "Update" : "Save"}
           </button>

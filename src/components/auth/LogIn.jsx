@@ -31,7 +31,7 @@ const LogIn = () => {
         <div className="min-h-[calc(100vh-64px)] flex justify-center items-center">
             <form
                 onSubmit={handleSubmit(loginHandler)}
-                className="sm:w-[450px] w-[360px] shadow-custom py-8 sm:px-8 px-4 rounded-md">
+                className="sm:w-112.5 w-90 shadow-custom py-8 sm:px-8 px-4 rounded-md">
                     <div className="flex flex-col items-center justify-center space-y-4">
                         <AiOutlineLogin className="text-slate-800 text-5xl"/>
                         <h1 className="text-slate-800 text-center font-montserrat lg:text-3xl text-2xl font-bold">
