@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logoutUser } from '../../store/actions';
 import toast from 'react-hot-toast';
@@ -7,12 +7,20 @@ import useAuth from '../../hooks/useAuth';
 
 const ProfileLayout = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useDispatch();
     const { user, isAuthenticated } = useAuth();
 
     const handleLogout = () => {
         dispatch(logoutUser(navigate, toast));
     };
+
+    // Redirect to orders if on base profile path
+    useEffect(() => {
+        if (location.pathname === '/profile' || location.pathname === '/profile/') {
+            navigate('/profile/orders', { replace: true });
+        }
+    }, [location.pathname, navigate]);
 
     if (!isAuthenticated) {
         navigate('/login');

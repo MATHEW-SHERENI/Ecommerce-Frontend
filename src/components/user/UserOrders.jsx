@@ -16,7 +16,7 @@ const UserOrders = () => {
     const [currentPage, setCurrentPage] = useState(0);
 
     const { userOrders, userPagination } = useSelector(state => state.order);
-    const { error } = useSelector(state => state.errors);
+    const { error } = useSelector(state => state.errors || {});
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -37,7 +37,9 @@ const UserOrders = () => {
                 queryString += `&timeFrame=${selectedTimeFrame}`;
             }
             
-            await dispatch(getUserOrders(queryString));
+            console.log('Fetching orders with query:', queryString);
+            const result = await dispatch(getUserOrders(queryString));
+            console.log('Orders API result:', result);
         } catch (error) {
             console.error('Failed to fetch orders:', error);
         } finally {
@@ -86,7 +88,7 @@ const UserOrders = () => {
         { value: '2022', label: '2022' },
     ];
 
-    if (loading && !userOrders) {
+    if (loading && (!userOrders || currentPage === 0)) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
@@ -122,15 +124,30 @@ const UserOrders = () => {
                     </div>
 
                     {/* Results Summary */}
-                    {userPagination?.totalElements && (
+                    {userPagination?.totalElements !== undefined ? (
                         <p className="text-gray-600">
                             {userPagination.totalElements} order{userPagination.totalElements !== 1 ? 's' : ''} found
                         </p>
+                    ) : (
+                        <p className="text-gray-600">
+                            Loading order count...
+                        </p>
+                    )}
+                    
+                    {/* Debug Information (remove in production) */}
+                    {process.env.NODE_ENV === 'development' && (
+                        <div className="mt-4 p-4 bg-gray-100 rounded-lg text-sm">
+                            <strong>Debug Info:</strong>
+                            <br />Loading: {loading ? 'true' : 'false'}
+                            <br />UserOrders: {userOrders ? `Array with ${userOrders.length} items` : 'null/undefined'}
+                            <br />Error: {error || 'none'}
+                            <br />IsAuthenticated: {isAuthenticated ? 'true' : 'false'}
+                        </div>
                     )}
                 </div>
 
                 {/* Orders List */}
-                {userOrders && userOrders.length > 0 ? (
+                {!loading && userOrders && userOrders.length > 0 ? (
                     <div className="space-y-6">
                         {userOrders.map((order) => (
                             <div key={order.orderId} className="bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -249,7 +266,7 @@ const UserOrders = () => {
                             </div>
                         ))}
                     </div>
-                ) : (
+                ) : !loading ? (
                     <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
                         <div className="mx-auto h-24 w-24 text-gray-400 mb-4">
                             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-full h-full">
@@ -257,15 +274,27 @@ const UserOrders = () => {
                             </svg>
                         </div>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
-                        <p className="text-gray-600 mb-6">You haven't placed any orders yet.</p>
-                        <button
-                            onClick={() => navigate('/products')}
-                            className="inline-flex items-center px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-md transition-colors"
-                        >
-                            Start shopping
-                        </button>
+                        <p className="text-gray-600 mb-6">
+                            {error ? 'There was an error loading your orders.' : "You haven't placed any orders yet."}
+                        </p>
+                        <div className="space-x-3">
+                            <button
+                                onClick={() => navigate('/products')}
+                                className="inline-flex items-center px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-md transition-colors"
+                            >
+                                Start shopping
+                            </button>
+                            {error && (
+                                <button
+                                    onClick={() => fetchOrders()}
+                                    className="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-md transition-colors"
+                                >
+                                    Retry
+                                </button>
+                            )}
+                        </div>
                     </div>
-                )}
+                ) : null}
 
                 {/* Pagination */}
                 {userPagination && userPagination.totalPages > 1 && (

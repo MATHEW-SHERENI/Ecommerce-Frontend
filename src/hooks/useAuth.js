@@ -1,32 +1,43 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getCurrentUser, refreshToken } from '../store/actions';
 
 export const useAuth = () => {
     const dispatch = useDispatch();
     const { user, loading, error } = useSelector(state => state.auth);
 
-    // Auto-refresh token on app load if user exists
+    // Auto-validate auth on app load if user exists in localStorage but not in Redux
     useEffect(() => {
         const initAuth = async () => {
             const storedAuth = localStorage.getItem('auth');
+            console.log('useAuth: Initializing auth. StoredAuth:', !!storedAuth, 'User in Redux:', !!user);
+            
             if (storedAuth && !user) {
                 try {
                     const parsedAuth = JSON.parse(storedAuth);
+                    console.log('useAuth: Parsed auth data:', { hasToken: !!(parsedAuth?.jwtToken || parsedAuth?.token), username: parsedAuth?.username });
+                    
                     if (parsedAuth?.jwtToken || parsedAuth?.token) {
-                        // Try to get current user to validate token
-                        await dispatch(getCurrentUser());
+                        // Set user in Redux from localStorage
+                        console.log('useAuth: Setting user in Redux from localStorage');
+                        dispatch({ type: "LOGIN_USER", payload: parsedAuth });
+                        
+                        // Don't validate token immediately on every page load to avoid auth loops
+                        // Let the API interceptor handle token validation when making requests
                     }
                 } catch (error) {
-                    console.log('Auth initialization failed:', error);
+                    console.error('useAuth: Auth initialization failed:', error);
                     // Clear invalid auth data
                     localStorage.removeItem('auth');
+                    dispatch({ type: "LOG_OUT" });
                 }
             }
         };
 
-        initAuth();
-    }, [dispatch, user]);
+        // Only run on mount, not on every user change
+        if (!user && localStorage.getItem('auth')) {
+            initAuth();
+        }
+    }, []); // Empty dependency array to only run on mount
 
     const isAuthenticated = !!user;
     const isAdmin = user?.roles?.includes('ROLE_ADMIN') || user?.role === 'ADMIN';
@@ -41,8 +52,9 @@ export const useAuth = () => {
         isAdmin,
         isSeller,
         isUser,
-        refreshToken: () => dispatch(refreshToken()),
     };
 };
 
 export default useAuth;
+
+

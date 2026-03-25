@@ -1,6 +1,8 @@
 const initialState = {
     adminOrder: null,
+    userOrders: null,
     pagination: {},
+    userPagination: {},
 };
 
 export const orderReducer = (state = initialState, action) => {
@@ -11,6 +13,19 @@ export const orderReducer = (state = initialState, action) => {
                 adminOrder: action.payload,
                 pagination: {
                     ...state.pagination,
+                    pageNumber: action.pageNumber,
+                    pageSize: action.pageSize,
+                    totalElements: action.totalElements,
+                    totalPages: action.totalPages,
+                    lastPage: action.lastPage,
+                },
+            };
+        case "FETCH_USER_ORDERS":
+            return {
+                ...state,
+                userOrders: action.payload,
+                userPagination: {
+                    ...state.userPagination,
                     pageNumber: action.pageNumber,
                     pageSize: action.pageSize,
                     totalElements: action.totalElements,

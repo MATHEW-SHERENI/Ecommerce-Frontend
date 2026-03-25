@@ -19,6 +19,11 @@ import AdminProducts from './components/admin/products/AdminProducts'
 import Sellers from './components/admin/sellers/Sellers'
 import Category from './components/admin/categories/Category'
 import Orders from './components/admin/orders/Orders'
+import ProfileLayout from './components/user/ProfileLayout'
+import UserOrders from './components/user/UserOrders'
+import Account from './components/user/Account'
+import RouteTest from './components/RouteTest'
+import AuthDebugger from './components/AuthDebugger'
 
 function App() {
   return (
@@ -31,19 +36,28 @@ function App() {
           <Route path='/about' element={ <About />}/>
           <Route path='/contact' element={ <Contact />}/>
           <Route path='/cart' element={ <Cart />}/>
+          <Route path='/test-routes' element={ <RouteTest />}/>
         
           <Route path='/' element={<PrivateRoute />}>
-            <Route path='/checkout' element={ <Checkout />}/>
-            <Route path='/order-confirm' element={ <PaymentConfirmation />}/>
+            <Route path='checkout' element={ <Checkout />}/>
+            <Route path='order-confirm' element={ <PaymentConfirmation />}/>
+          </Route>
+
+          {/* User Profile Routes */}
+          <Route path='/profile' element={<PrivateRoute />}>
+            <Route path='' element={ <ProfileLayout />}>
+              <Route path='orders' element={ <UserOrders />} />
+              <Route path='account' element={ <Account />} />
+            </Route>
           </Route>
 
           <Route path='/' element={<PrivateRoute publicPage />}>
-            <Route path='/login' element={ <LogIn />}/>
-            <Route path='/register' element={ <Register />}/>
+            <Route path='login' element={ <LogIn />}/>
+            <Route path='register' element={ <Register />}/>
           </Route>
 
-           <Route path='/' element={<PrivateRoute adminOnly />}>
-            <Route path='admin' element={ <AdminLayout />}>
+           <Route path='/admin' element={<PrivateRoute adminOnly />}>
+            <Route path='' element={ <AdminLayout />}>
               <Route path='' element={<Dashboard />} />
               <Route path='products' element={<AdminProducts />} />
               <Route path='sellers' element={<Sellers />} />
@@ -52,6 +66,9 @@ function App() {
             </Route>
           </Route>
         </Routes>
+        
+        {/* Debug Component - Remove in production */}
+        {process.env.NODE_ENV === 'development' && <AuthDebugger />}
       </Router>
       <Toaster position='bottom-center'/>
     </React.Fragment>
