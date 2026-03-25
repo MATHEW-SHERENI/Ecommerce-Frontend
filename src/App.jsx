@@ -23,7 +23,7 @@ import ProfileLayout from './components/user/ProfileLayout'
 import UserOrders from './components/user/UserOrders'
 import Account from './components/user/Account'
 import RouteTest from './components/RouteTest'
-import AuthDebugger from './components/AuthDebugger'
+//import AuthDebugger from './components/AuthDebugger'
 
 function App() {
   return (
@@ -68,7 +68,7 @@ function App() {
         </Routes>
         
         {/* Debug Component - Remove in production */}
-        {process.env.NODE_ENV === 'development' && <AuthDebugger />}
+        {/* {process.env.NODE_ENV === 'development' && <AuthDebugger />} */}
       </Router>
       <Toaster position='bottom-center'/>
     </React.Fragment>
