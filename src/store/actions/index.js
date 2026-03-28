@@ -78,22 +78,106 @@ const getAddressPayloadCandidates = (sendData) => {
     ];
 };
 
+const normalizeBearerToken = (value) => {
+    if (!value || typeof value !== "string") {
+        return null;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return null;
+    }
+    // Remove any "Bearer " prefix first.
+    const withoutBearerPrefix = trimmed.replace(/^Bearer\s+/i, "");
+
+    // Backend sometimes returns the JWT embedded in a cookie string, like:
+    // "smartcart=<jwt>; Path=/api; Max-Age=..."
+    // JWT segments may include '=' padding at the end, so we must extract
+    // the raw token using a regex over the *whole* string (not split on '=').
+    const jwtMatch = withoutBearerPrefix.match(
+        /[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+=*/
+    );
+    if (jwtMatch && jwtMatch[0]) {
+        // Sometimes the cookie string may contain an URL-encoded JWT value.
+        // Decode it if needed (safe if not encoded).
+        try {
+            return jwtMatch[0].includes("%")
+                ? decodeURIComponent(jwtMatch[0])
+                : jwtMatch[0];
+        } catch {
+            return jwtMatch[0];
+        }
+    }
+
+    // Fallback: take the part after the first '=' (safe for cookie strings).
+    const firstPart = withoutBearerPrefix.split(";")[0].trim();
+    const eqIdx = firstPart.indexOf("=");
+    if (eqIdx !== -1) {
+        const tokenPart = firstPart.slice(eqIdx + 1).trim();
+        if (!tokenPart) return null;
+        try {
+            return tokenPart.includes("%") ? decodeURIComponent(tokenPart) : tokenPart;
+        } catch {
+            return tokenPart;
+        }
+    }
+
+    return withoutBearerPrefix || null;
+};
+
 const getAuthRequestConfig = (getState) => {
+    const extractTokenFromObject = (source) => {
+        if (!source || typeof source !== "object") {
+            return null;
+        }
+
+        const directToken =
+            source?.jwtToken ||
+            source?.token ||
+            source?.accessToken ||
+            source?.access_token ||
+            source?.bearerToken ||
+            source?.idToken ||
+            source?.jwt ||
+            null;
+
+        if (directToken && typeof directToken === "string") {
+            return normalizeBearerToken(directToken);
+        }
+
+        // Common backend response wrappers: { data: {...} }, { user: {...} }, { result: {...} }, etc.
+        const nestedKeys = ["data", "user", "auth", "result", "response"];
+        for (const key of nestedKeys) {
+            const nestedValue = source?.[key];
+            if (nestedValue && typeof nestedValue === "object") {
+                const nestedToken = extractTokenFromObject(nestedValue);
+                if (nestedToken) return nestedToken;
+            }
+        }
+
+        return null;
+    };
+
     const { user } = getState().auth || {};
-    const token =
-        user?.jwtToken ||
-        user?.token ||
-        user?.accessToken ||
-        user?.jwt ||
-        null;
+    let token = extractTokenFromObject(user);
 
     if (!token) {
+        try {
+            const persistedAuth = localStorage.getItem("auth");
+            const parsedAuth = persistedAuth ? JSON.parse(persistedAuth) : null;
+            token = extractTokenFromObject(parsedAuth);
+        } catch (error) {
+            token = null;
+        }
+    }
+
+    const normalized = normalizeBearerToken(token);
+    if (!normalized) {
         return undefined;
     }
 
     return {
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${normalized}`,
         },
     };
 };
@@ -384,7 +468,6 @@ export const getUserAddresses = () => async (dispatch, getState) => {
         if (error?.response?.status === 401) {
             dispatch({ type: "LOG_OUT" });
             localStorage.removeItem("auth");
-            localStorage.removeItem("CHECKOUT_ADDRESS");
             dispatch({
                 type: "IS_ERROR",
                 payload: "Session expired. Please login again.",
@@ -429,6 +512,10 @@ export const createUserCart = (sendCartItems) => async (dispatch, getState) => {
             return;
         }
 
+        // Normalize + dedupe by productId so we don't try adding the same product twice.
+        // Note: we do NOT call getUserCart() first because it can overwrite the local cart with
+        // an empty backend response before items are synced. The 400 handler below already
+        // gracefully skips items that already exist in the backend cart.
         const normalizedCartItems = (Array.isArray(sendCartItems) ? sendCartItems : [])
             .map((item) => ({
                 productId: item?.productId ?? item?.id,
@@ -436,17 +523,64 @@ export const createUserCart = (sendCartItems) => async (dispatch, getState) => {
             }))
             .filter((item) => item.productId != null && item.quantity > 0);
 
-        if (normalizedCartItems.length === 0) {
+        const dedupedByProductId = normalizedCartItems.reduce((acc, item) => {
+            const key = String(item.productId);
+            acc[key] = (acc[key] ?? 0) + item.quantity;
+            return acc;
+        }, {});
+
+        const itemsToCreate = Object.entries(dedupedByProductId).map(([productId, qty]) => ({
+            productId,
+            quantity: qty,
+        }));
+
+        if (itemsToCreate.length === 0) {
             dispatch({ type: "IS_SUCCESS" });
             return;
         }
 
-        // Backend expects one cart item per request body: { productId, quantity }.
-        for (const item of normalizedCartItems) {
-            await api.post('/cart/create', item, requestConfig);
+        // Backend throws 400 if the product already exists in the user's cart.
+        // During checkout we often "sync" from localStorage, so duplicates are common.
+        let hadNon400Error = false;
+
+        for (const item of itemsToCreate) {
+            try {
+                await api.post(
+                    `/carts/products/${item.productId}/quantity/${item.quantity}`,
+                    null,
+                    requestConfig
+                );
+            } catch (error) {
+                const status =
+                    error?.response?.status ??
+                    error?.status ??
+                    error?.response?.statusCode;
+                const message = extractApiErrorMessage(error, "");
+
+                // If backend says 400, skip this item and continue syncing.
+                // This prevents checkout from blocking due to cart duplicates or stock/quantity validation.
+                const isBadRequest = status === 400;
+                const isAlreadyExists =
+                    typeof message === "string" &&
+                    message.toLowerCase().includes("already exists in the cart");
+
+                if (isBadRequest || isAlreadyExists) {
+                    continue;
+                }
+
+                hadNon400Error = true;
+                throw error;
+            }
         }
 
         await dispatch(getUserCart());
+
+        if (hadNon400Error) {
+            dispatch({
+                type: "IS_ERROR",
+                payload: "Failed to create cart items",
+            });
+        }
     } catch (error) {
         console.log(error);
         dispatch({ 
@@ -485,21 +619,92 @@ export const createStripePaymentSecret
     = (sendData) => async (dispatch, getState) => {
         try {
             dispatch({ type: "IS_FETCHING" });
-            const { data } = await api.post("/order/stripe-client-secret", sendData);
+            const requestConfig = getAuthRequestConfig(getState);
+            if (!requestConfig) {
+                dispatch({
+                    type: "IS_ERROR",
+                    payload: "Please login again to continue payment.",
+                });
+                return;
+            }
+
+            const { data } = await api.post("/order/stripe-client-secret", sendData, requestConfig);
             dispatch({ type: "CLIENT_SECRET", payload: data });
               localStorage.setItem("client-secret", JSON.stringify(data));
               dispatch({ type: "IS_SUCCESS" });
         } catch (error) {
             console.log(error);
-            toast.error(error?.response?.data?.message || "Failed to create client secret");
+            dispatch({
+                type: "IS_ERROR",
+                payload: extractApiErrorMessage(error, "Failed to create client secret"),
+            });
         }
 };
 
-
-export const stripePaymentConfirmation 
-    = (sendData, setErrorMesssage, setLoadng, toast) => async (dispatch, getState) => {
+/**
+ * Stripe Checkout Session (hosted checkout). Backend must create a Session and return a redirect URL.
+ * POST /order/stripe-checkout-session — expect JSON: { "url": "https://checkout.stripe.com/..." }.
+ * successUrl should include the literal substring {CHECKOUT_SESSION_ID} for Stripe to substitute.
+ */
+export const createStripeCheckoutSession =
+    (sendData) => async (dispatch, getState) => {
         try {
-            const response  = await api.post("/order/users/payments/online", sendData);
+            dispatch({ type: "IS_FETCHING" });
+            const requestConfig = getAuthRequestConfig(getState);
+            if (!requestConfig) {
+                dispatch({
+                    type: "IS_ERROR",
+                    payload: "Please login again to continue payment.",
+                });
+                return;
+            }
+
+            const { data } = await api.post(
+                "/order/stripe-checkout-session",
+                sendData,
+                requestConfig
+            );
+            const url =
+                (typeof data === "string" ? data : null) ||
+                data?.url ||
+                data?.sessionUrl;
+
+            if (!url || typeof url !== "string") {
+                dispatch({
+                    type: "IS_ERROR",
+                    payload:
+                        "Checkout session did not return a redirect URL. Check your backend response.",
+                });
+                return;
+            }
+
+            dispatch({ type: "IS_SUCCESS" });
+            window.location.assign(url);
+        } catch (error) {
+            console.log(error);
+            const status = error?.response?.status;
+            const message =
+                status === 401
+                    ? "Session expired. Please log out and log in again to continue payment."
+                    : extractApiErrorMessage(error, "Failed to start Stripe Checkout");
+            dispatch({
+                type: "IS_ERROR",
+                payload: message,
+            });
+        }
+    };
+
+
+export const stripePaymentConfirmation
+    = (sendData, setErrorMessage, setLoading, toast, onSuccess) => async (dispatch, getState) => {
+        try {
+            const requestConfig = getAuthRequestConfig(getState);
+            if (!requestConfig) {
+                setErrorMessage("Session expired. Please login again.");
+                return;
+            }
+
+            const response = await api.post("/order/users/payments/online", sendData, requestConfig);
             if (response.data) {
                 localStorage.removeItem("CHECKOUT_ADDRESS");
                 localStorage.removeItem("cartItems");
@@ -507,11 +712,20 @@ export const stripePaymentConfirmation
                 dispatch({ type: "REMOVE_CLIENT_SECRET_ADDRESS"});
                 dispatch({ type: "CLEAR_CART"});
                 toast.success("Order Accepted");
-              } else {
-                setErrorMesssage("Payment Failed. Please try again.");
-              }
+                if (typeof onSuccess === "function") {
+                    onSuccess(response.data);
+                }
+            } else {
+                setErrorMessage("Payment Failed. Please try again.");
+            }
         } catch (error) {
-            setErrorMesssage("Payment Failed. Please try again.");
+            setErrorMessage(
+                extractApiErrorMessage(error, "Payment Failed. Please try again.")
+            );
+        } finally {
+            if (typeof setLoading === "function") {
+                setLoading(false);
+            }
         }
 };
 

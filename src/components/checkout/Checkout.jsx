@@ -1,5 +1,5 @@
 import { Button, Step, StepLabel, Stepper } from '@mui/material';
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import AddressInfo from './AddressInfo';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUserAddresses } from '../../store/actions';
@@ -26,12 +26,12 @@ const Checkout = () => {
     };
 
     const handleNext = () => {
-        if(activeStep === 0 && !selectedUserCheckoutAddress) {
+        if(activeStep === 0 && !selectedUserCheckoutAddress?.addressId) {
             toast.error("Please select checkout address before proceeding.");
             return;
         }
 
-        if(activeStep === 1 && (!selectedUserCheckoutAddress || !paymentMethod)) {
+        if(activeStep === 1 && (!selectedUserCheckoutAddress?.addressId || !paymentMethod)) {
             toast.error("Please select payment address before proceeding.");
             return;
         }
@@ -60,7 +60,7 @@ const Checkout = () => {
             ))}
         </Stepper>
 
-        {isLoading ? (
+        {isLoading && activeStep === 0 ? (
             <div className='lg:w-[80%] mx-auto py-5'>
                 <Skeleton />
             </div>
@@ -68,12 +68,12 @@ const Checkout = () => {
             <div className='mt-5'>
                 {activeStep === 0 && <AddressInfo address={address} />}
                 {activeStep === 1 && <PaymentMethod />}
-                {activeStep === 2 && <OrderSummary 
+                {activeStep === 2 && <OrderSummary
                                         totalPrice={totalPrice}
                                         cart={cart}
                                         address={selectedUserCheckoutAddress}
                                         paymentMethod={paymentMethod}/>}
-                {activeStep === 3 && 
+                {activeStep === 3 &&
                     <>
                         {paymentMethod === "Stripe" ? (
                             <StripePayment />
@@ -99,7 +99,7 @@ const Checkout = () => {
                 <button
                     disabled={
                         errorMessage || (
-                            (activeStep === 0 ? !selectedUserCheckoutAddress
+                            (activeStep === 0 ? !selectedUserCheckoutAddress?.addressId
                                 : activeStep === 1 ? !paymentMethod
                                 : false
                             )
@@ -108,7 +108,7 @@ const Checkout = () => {
                     className={`bg-custom-blue font-semibold px-6 h-10 rounded-md text-white
                        ${
                         errorMessage ||
-                        (activeStep === 0 && !selectedUserCheckoutAddress) ||
+                        (activeStep === 0 && !selectedUserCheckoutAddress?.addressId) ||
                         (activeStep === 1 && !paymentMethod)
                         ? "opacity-60"
                         : ""

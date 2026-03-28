@@ -10,7 +10,9 @@ const PaymentMethod = () => {
     const { isLoading, errorMessage } = useSelector((state) => state.errors);
 
     useEffect(() => {
-        if (cart.length > 0 && !cartId && !errorMessage) {
+        // If backend cartId is missing, keep trying to sync from localStorage.
+        // The cart-sync action itself handles duplicate errors gracefully.
+        if (cart.length > 0 && !cartId) {
             const sendCartItems = cart.map((item) => {
                 return {
                     productId: item.productId,
@@ -20,7 +22,7 @@ const PaymentMethod = () => {
             
             dispatch(createUserCart(sendCartItems));
         }
-    }, [dispatch, cart, cartId, errorMessage]);
+    }, [dispatch, cart, cartId]);
 
     const paymentMethodHandler = (method) => {
         dispatch(addPaymentMethod(method));

@@ -22,9 +22,23 @@ export const getBackendImageUrl = (imagePath = "") => {
   }
 
   if (/^https?:\/\//i.test(source)) {
-    if (isDev && normalizedBackendUrl && source.startsWith(`${normalizedBackendUrl}/`)) {
-      return source.replace(normalizedBackendUrl, "");
+    if (isDev) {
+      try {
+        const parsed = new URL(source);
+
+        // During local development, route backend image URLs through Vite proxy.
+        if (parsed.pathname.startsWith("/images/")) {
+          return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+        }
+      } catch (error) {
+        // If parsing fails, fall through and return the source as-is.
+      }
+
+      if (normalizedBackendUrl && source.startsWith(`${normalizedBackendUrl}/`)) {
+        return source.replace(normalizedBackendUrl, "");
+      }
     }
+
     return source;
   }
 
