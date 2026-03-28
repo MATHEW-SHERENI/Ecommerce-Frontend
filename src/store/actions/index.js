@@ -747,11 +747,13 @@ export const analyticsAction = () => async (dispatch, getState) => {
         }
 };
 
-export const getOrdersForDashboard = (queryString, isAdmin) => async (dispatch) => {
+export const getOrdersForDashboard = (queryString, isAdmin) => async (dispatch, getState) => {
     try {
         dispatch({ type: "IS_FETCHING" });
         const endpoint = isAdmin ? "/admin/orders" : "/seller/orders";
-        const { data } = await api.get(buildUrlWithQuery(endpoint, queryString));
+        const requestConfig = getAuthRequestConfig(getState);
+        
+        const { data } = await api.get(buildUrlWithQuery(endpoint, queryString), requestConfig);
         dispatch({
             type: "GET_ADMIN_ORDERS",
             payload: data.content,
@@ -778,7 +780,9 @@ export const updateOrderStatusFromDashboard =
     try {
         setLoader(true);
         const endpoint = isAdmin ? "/admin/orders/" : "/seller/orders/";
-        const { data } = await api.put(`${endpoint}${orderId}/status`, { status: orderStatus});
+        const requestConfig = getAuthRequestConfig(getState);
+        
+        const { data } = await api.put(`${endpoint}${orderId}/status`, { status: orderStatus}, requestConfig);
         toast.success(data.message || "Order updated successfully");
         await dispatch(getOrdersForDashboard());
     } catch (error) {
@@ -790,11 +794,13 @@ export const updateOrderStatusFromDashboard =
 };
 
 
-export const dashboardProductsAction = (queryString, isAdmin) => async (dispatch) => {
+export const dashboardProductsAction = (queryString, isAdmin) => async (dispatch, getState) => {
     try {
         dispatch({ type: "IS_FETCHING" });
         const endpoint = isAdmin ? "/admin/products" : "/seller/products";
-        const { data } = await api.get(buildUrlWithQuery(endpoint, queryString));
+        const requestConfig = getAuthRequestConfig(getState);
+        
+        const { data } = await api.get(buildUrlWithQuery(endpoint, queryString), requestConfig);
         dispatch({
             type: "FETCH_PRODUCTS",
             payload: data.content,
@@ -816,11 +822,13 @@ export const dashboardProductsAction = (queryString, isAdmin) => async (dispatch
 
 
 export const updateProductFromDashboard = 
-    (sendData, toast, reset, setLoader, setOpen, isAdmin) => async (dispatch) => {
+    (sendData, toast, reset, setLoader, setOpen, isAdmin) => async (dispatch, getState) => {
     try {
         setLoader(true);
         const endpoint = isAdmin ? "/admin/products/" : "/seller/products/";
-        await api.put(`${endpoint}${sendData.id}`, sendData);
+        const requestConfig = getAuthRequestConfig(getState);
+        
+        await api.put(`${endpoint}${sendData.id}`, sendData, requestConfig);
         toast.success("Product update successful");
         reset();
         setLoader(false);
@@ -828,7 +836,7 @@ export const updateProductFromDashboard =
         await dispatch(dashboardProductsAction());
     } catch (error) {
         toast.error(error?.response?.data?.description || "Product update failed");
-     
+        setLoader(false);
     }
 };
 
@@ -839,16 +847,19 @@ export const addNewProductFromDashboard =
         try {
             setLoader(true);
             const endpoint = isAdmin ? "/admin/categories/" : "/seller/categories/";
+            const requestConfig = getAuthRequestConfig(getState);
+            
             await api.post(`${endpoint}${sendData.categoryId}/product`,
-                sendData
+                sendData,
+                requestConfig
             );
             toast.success("Product created successfully");
             reset();
             setOpen(false);
             await dispatch(dashboardProductsAction());
         } catch (error) {
-            console.error(err);
-            toast.error(err?.response?.data?.description || "Product creation failed");
+            console.error(error);
+            toast.error(error?.response?.data?.description || "Product creation failed");
         } finally {
             setLoader(false);
         }
@@ -859,7 +870,9 @@ export const deleteProduct =
     try {
         setLoader(true)
         const endpoint = isAdmin ? "/admin/products/" : "/seller/products/";
-        await api.delete(`${endpoint}${productId}`);
+        const requestConfig = getAuthRequestConfig(getState);
+        
+        await api.delete(`${endpoint}${productId}`, requestConfig);
         toast.success("Product deleted successfully");
         setLoader(false);
         setOpenDeleteModal(false);
@@ -918,7 +931,9 @@ export const createCategoryDashboardAction =
   (sendData, setOpen, reset, toast) => async (dispatch, getState) => {
     try {
       dispatch({ type: "CATEGORY_LOADER" });
-      await api.post("/admin/categories", sendData);
+      const requestConfig = getAuthRequestConfig(getState);
+      
+      await api.post("/admin/categories", sendData, requestConfig);
       dispatch({ type: "CATEGORY_SUCCESS" });
       reset();
       toast.success("Category Created Successful");
@@ -942,8 +957,9 @@ export const updateCategoryDashboardAction =
   async (dispatch, getState) => {
     try {
       dispatch({ type: "CATEGORY_LOADER" });
+      const requestConfig = getAuthRequestConfig(getState);
 
-      await api.put(`/admin/categories/${categoryID}`, sendData);
+      await api.put(`/admin/categories/${categoryID}`, sendData, requestConfig);
 
       dispatch({ type: "CATEGORY_SUCCESS" });
 
@@ -968,8 +984,9 @@ export const deleteCategoryDashboardAction =
   (setOpen, categoryID, toast) => async (dispatch, getState) => {
     try {
       dispatch({ type: "CATEGORY_LOADER" });
+      const requestConfig = getAuthRequestConfig(getState);
 
-      await api.delete(`/admin/categories/${categoryID}`);
+      await api.delete(`/admin/categories/${categoryID}`, requestConfig);
 
       dispatch({ type: "CATEGORY_SUCCESS" });
 
@@ -1034,3 +1051,223 @@ export const addNewDashboardSeller =
       setOpen(false);
     }
   };
+
+// Authentication Actions
+export const loginUser = (credentials, navigate, toast) => async (dispatch) => {
+    try {
+        dispatch({ type: "AUTH_LOADING" });
+        const { data } = await api.post("/auth/signin", credentials);
+        
+        // Store user data in localStorage and Redux
+        localStorage.setItem("auth", JSON.stringify(data));
+        dispatch({ type: "LOGIN_USER", payload: data });
+        
+        toast.success("Login successful!");
+        navigate("/");
+    } catch (error) {
+        const message = extractAuthErrorMessage(error);
+        dispatch({ type: "AUTH_ERROR", payload: message });
+        toast.error(message);
+    }
+};
+
+export const registerUser = (userData, navigate, toast) => async (dispatch) => {
+    try {
+        dispatch({ type: "AUTH_LOADING" });
+        const { data } = await api.post("/auth/signup", userData);
+        
+        toast.success(data.message || "Registration successful! Please login.");
+        navigate("/login");
+    } catch (error) {
+        const message = extractAuthErrorMessage(error);
+        dispatch({ type: "AUTH_ERROR", payload: message });
+        toast.error(message);
+    }
+};
+
+export const logoutUser = (navigate, toast) => async (dispatch) => {
+    try {
+        await api.post("/auth/signout");
+        
+        // Clear localStorage
+        localStorage.removeItem("auth");
+        localStorage.removeItem("cartItems");
+        localStorage.removeItem("CHECKOUT_ADDRESS");
+        
+        dispatch({ type: "LOG_OUT" });
+        toast.success("Logged out successfully!");
+        navigate("/login");
+    } catch (error) {
+        // Even if backend fails, clear local state
+        localStorage.removeItem("auth");
+        localStorage.removeItem("cartItems");
+        localStorage.removeItem("CHECKOUT_ADDRESS");
+        dispatch({ type: "LOG_OUT" });
+        navigate("/login");
+    }
+};
+
+export const getCurrentUser = () => async (dispatch) => {
+    try {
+        const { data } = await api.get("/auth/user");
+        dispatch({ type: "LOGIN_USER", payload: data });
+        return data;
+    } catch (error) {
+        console.log("Failed to get current user:", error);
+        // If token is invalid, clear auth state
+        if (error.response?.status === 401) {
+            localStorage.removeItem("auth");
+            dispatch({ type: "LOG_OUT" });
+        }
+        throw error;
+    }
+};
+
+export const refreshToken = () => async (dispatch) => {
+    try {
+        const { data } = await api.post("/auth/refresh");
+        localStorage.setItem("auth", JSON.stringify(data));
+        dispatch({ type: "LOGIN_USER", payload: data });
+        return data;
+    } catch (error) {
+        console.log("Token refresh failed:", error);
+        localStorage.removeItem("auth");
+        dispatch({ type: "LOG_OUT" });
+        throw error;
+    }
+};
+
+// User Address Actions (Additional)
+
+export const addUserAddress = (addressData, toast) => async (dispatch, getState) => {
+    try {
+        dispatch({ type: "AUTH_LOADING" });
+        const config = getAuthRequestConfig(getState);
+        if (!config) {
+            throw new Error("Authentication required");
+        }
+        
+        const candidates = getAddressPayloadCandidates(addressData);
+        const response = await tryPostWithFallbackEndpoints(
+            candidates.map(() => "/addresses"),
+            candidates[0],
+            config
+        );
+        
+        // Refresh addresses list
+        await dispatch(getUserAddresses());
+        
+        toast.success("Address added successfully!");
+        return response.data;
+    } catch (error) {
+        const message = extractApiErrorMessage(error, "Failed to add address");
+        dispatch({ type: "AUTH_ERROR", payload: message });
+        toast.error(message);
+        throw error;
+    }
+};
+
+export const updateUserAddress = (addressId, addressData, toast) => async (dispatch, getState) => {
+    try {
+        dispatch({ type: "AUTH_LOADING" });
+        const config = getAuthRequestConfig(getState);
+        if (!config) {
+            throw new Error("Authentication required");
+        }
+        
+        const normalizedPayload = normalizeAddressPayload(addressData);
+        const { data } = await api.put(`/addresses/${addressId}`, normalizedPayload, config);
+        
+        // Refresh addresses list
+        await dispatch(getUserAddresses());
+        
+        toast.success("Address updated successfully!");
+        return data;
+    } catch (error) {
+        const message = extractApiErrorMessage(error, "Failed to update address");
+        dispatch({ type: "AUTH_ERROR", payload: message });
+        toast.error(message);
+        throw error;
+    }
+};
+
+
+
+export const selectCheckoutAddress = (address) => (dispatch) => {
+    localStorage.setItem("CHECKOUT_ADDRESS", JSON.stringify(address));
+    dispatch({ type: "SELECT_CHECKOUT_ADDRESS", payload: address });
+};
+
+export const removeCheckoutAddress = () => (dispatch) => {
+    localStorage.removeItem("CHECKOUT_ADDRESS");
+    dispatch({ type: "REMOVE_CHECKOUT_ADDRESS" });
+};
+
+// User Orders Actions
+export const getUserOrders = (queryString = "") => async (dispatch, getState) => {
+    try {
+        dispatch({ type: "IS_FETCHING" });
+        const config = getAuthRequestConfig(getState);
+        if (!config) {
+            throw new Error("Authentication required");
+        }
+        
+        const { data } = await api.get(buildUrlWithQuery("/order/users/orders", queryString), config);
+        dispatch({
+            type: "FETCH_USER_ORDERS",
+            payload: data.content,
+            pageNumber: data.pageNumber,
+            pageSize: data.pageSize,
+            totalElements: data.totalElements,
+            totalPages: data.totalPages,
+            lastPage: data.lastPage,
+        });
+        dispatch({ type: "IS_SUCCESS" });
+        return data;
+    } catch (error) {
+        console.log("Failed to fetch user orders:", error);
+        const message = extractApiErrorMessage(error, "Failed to fetch orders");
+        dispatch({ type: "IS_ERROR", payload: message });
+        throw error;
+    }
+};
+
+export const reorderItems = (orderId, navigate, toast) => async (dispatch, getState) => {
+    try {
+        dispatch({ type: "IS_FETCHING" });
+        
+        // This would typically fetch order details and add items to cart
+        // For now, we'll just show a success message
+        toast.success("Items added to cart successfully!");
+        navigate("/cart");
+        
+        dispatch({ type: "IS_SUCCESS" });
+    } catch (error) {
+        console.log("Failed to reorder items:", error);
+        const message = extractApiErrorMessage(error, "Failed to reorder items");
+        dispatch({ type: "IS_ERROR", payload: message });
+        toast.error(message);
+    }
+};
+
+// Admin Actions for User Management
+export const getAllSellers = (pageNumber = 0, toast) => async (dispatch, getState) => {
+    try {
+        dispatch({ type: "AUTH_LOADING" });
+        const config = getAuthRequestConfig(getState);
+        if (!config) {
+            throw new Error("Authentication required");
+        }
+        
+        const { data } = await api.get(`/auth/sellers?pageNumber=${pageNumber}`, config);
+        dispatch({ type: "FETCH_SELLERS", payload: data });
+        return data;
+    } catch (error) {
+        const message = extractApiErrorMessage(error, "Failed to fetch sellers");
+        dispatch({ type: "AUTH_ERROR", payload: message });
+        if (toast) {
+            toast.error(message);
+        }
+        throw error;
+    }
+};

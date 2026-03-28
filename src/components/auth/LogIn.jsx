@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { AiOutlineLogin } from "react-icons/ai";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import InputField from "../shared/InputField";
 import { useDispatch } from "react-redux";
 import { authenticateSignInUser } from "../../store/actions";
@@ -12,6 +12,7 @@ const LogIn = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [loader, setLoader] = useState(false);
+    const [searchParams] = useSearchParams();
 
     const {
         register,
@@ -21,6 +22,15 @@ const LogIn = () => {
     } = useForm({
         mode: "onTouched",
     });
+
+    useEffect(() => {
+        // Check if redirected due to expired token
+        if (searchParams.get('expired') === 'true') {
+            toast.error('Your session has expired. Please log in again.');
+            // Clean up the URL
+            navigate('/login', { replace: true });
+        }
+    }, [searchParams, navigate]);
 
     const loginHandler = async (data) => {
         console.log("Login Click");
